@@ -4,7 +4,7 @@
 # Jiao Lin <jiao.lin@gmail.com>
 #
 
-from mcvine.cli import mcvine, click
+from . import mcvine, click
 
 @mcvine.group(help='Commands to extract phonon dispersion curves from phonon data in IDF format')
 def phonon():
