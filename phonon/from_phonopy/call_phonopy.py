@@ -17,11 +17,13 @@ THz2meV=4.1357
 
 def onGrid(
         atom_chemical_symbols, qpoints, supercell_matrix, 
-        freq2omega=THz2meV,
-        poscar='POSCAR', force_constants='FORCE_CONSTANTS',
+        force_constants,
+        freq2omega=THz2meV, poscar='POSCAR',
 ):
     """use phonopy to compute phonon frequencies and polarizations
     for the given Q points on a grid
+
+    force_constants: instance
     """
     
     # set up Si crystal lattice
@@ -38,7 +40,6 @@ def onGrid(
     # supercells = phonon.get_supercells_with_displacements()
 
     # set force constants
-    force_constants=file_IO.parse_FORCE_CONSTANTS(force_constants)
     phonon.set_force_constants(force_constants)
 
     # calc band structure

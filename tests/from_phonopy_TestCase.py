@@ -20,9 +20,8 @@ class TestCase(unittest.TestCase):
         from mcvine.phonon.from_phonopy import make_all
         os.chdir(work)
         make_all(
-            N=10, 
-            supercell_matrix=np.eye(3)*5, 
-            atom_chemical_symbols=['Si']
+            species=['Si'], supercell_dims=[5,5,5], qgrid_dims=[11,11,11], fix_pols_phase=True,
+            force_constants='FORCE_CONSTANTS', poscar='POSCAR',
         )
         return
 
