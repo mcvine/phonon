@@ -16,17 +16,20 @@ from phonopy import Phonopy, file_IO
 THz2meV=4.1357
 
 def onGrid(
-    atom_chemical_symbols, qpoints, supercell_matrix, 
-    freq2omega=THz2meV):
+        atom_chemical_symbols, qpoints, supercell_matrix, 
+        freq2omega=THz2meV,
+        poscar='POSCAR', force_constants='FORCE_CONSTANTS',
+):
     """use phonopy to compute phonon frequencies and polarizations
     for the given Q points on a grid
     """
     
     # set up Si crystal lattice
-    bulk = vasp.read_vasp("POSCAR", atom_chemical_symbols)
+    bulk = vasp.read_vasp(poscar, atom_chemical_symbols)
     
     # phonopy phonon instance
-    phonon = Phonopy(bulk, supercell_matrix, distance=0.01, factor=VaspToTHz)
+    phonon = Phonopy(bulk, supercell_matrix, factor=VaspToTHz)
+    phonon.generate_displacements(distance=0.01)
     # symmetry = phonon.get_symmetry()
     
     # report
@@ -35,14 +38,14 @@ def onGrid(
     # supercells = phonon.get_supercells_with_displacements()
 
     # set force constants
-    force_constants=file_IO.parse_FORCE_CONSTANTS('FORCE_CONSTANTS')
+    force_constants=file_IO.parse_FORCE_CONSTANTS(force_constants)
     phonon.set_force_constants(force_constants)
 
     # calc band structure
     # . compute
     phonon.set_qpoints_phonon(
         qpoints, is_eigenvectors=True,
-        write_dynamical_matrices=False, factor=VaspToTHz)
+        write_dynamical_matrices=False) # , factor=VaspToTHz)
 
     # output band structure
     # phonon.write_yaml_qpoints_phonon()
