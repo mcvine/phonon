@@ -12,7 +12,9 @@ def fromOmaga2():
     max = np.max(energies)
     print max
 
-    boundaries = np.arange(0, (max+10)//10*10, 0.2)
+    max = (max+10)//10*10.
+    step = max/500; step = 10**np.round(np.log10(step))
+    boundaries = np.arange(0, max, step)
 
     hist, edges = np.histogram(energies, boundaries)
 
