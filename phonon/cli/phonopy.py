@@ -15,7 +15,6 @@ def phonopy():
 @click.option("--supercell-dims", default=[5,5,5], help='supercell dimensions, eg "5 5 5". should be consistent with the FORCE_CONSTANTS file', type=int, nargs=3)
 @click.option("--qgrid-dims", default=[51, 51, 51], help='Q grid dimensions, eg "51 51 51"', type=int, nargs=3)
 def griddisp(force_constants, poscar, species, supercell_dims, qgrid_dims):
-    import pdb; pdb.set_trace()
     species = species.split(',')
     from ..from_phonopy import make_all
     make_all(
