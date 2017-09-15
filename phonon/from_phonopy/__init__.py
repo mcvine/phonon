@@ -87,6 +87,7 @@ def make_omega2_pols(
     
     print "* Writing out freqencies"
     from mccomponents.sample.idf import Omega2, Polarizations
+    freq[freq<0] = 0
     omega2 = freq**2 * 1e24 * (2*np.pi)**2
     Omega2.write(omega2)
 
@@ -96,11 +97,12 @@ def make_omega2_pols(
     nq, nbr, natoms, three = pols.shape
     assert three is 3
     if fix_phase:
+        print "* Fixing phase: exp(-i Q.d)"
         atoms = vasp.read_vasp(poscar, species)
         positions = atoms.get_scaled_positions()
         for iatom in range(natoms):
             qdotr = np.dot(Qs, positions[iatom]) * 2 * np.pi
-            phase = np.exp(1j * qdotr)
+            phase = np.exp(-1j * qdotr)
             pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
             continue
     Polarizations.write(pols)
@@ -113,7 +115,8 @@ def make_Qgridinfo(qgrid_dims, species, poscar='POSCAR'):
     from phonopy.interface import vasp
     import numpy as np
     atoms = vasp.read_vasp(poscar, species)
-    reci_cell = np.linalg.inv(atoms.cell) * 2*np.pi
+    # atoms.cell is [a1,a2,a3]; inv(atoms.cell) is [b1,b2,b3].T; we want [b1,b2,b3]; hence the .T
+    reci_cell = np.linalg.inv(atoms.cell).T * 2*np.pi
     # output
     ostream  = open("Qgridinfo", 'wt')
     # reciprocal cell
