@@ -130,7 +130,7 @@ def slice(crystal, phonon, start, end, npts, cartesian, outhist, eaxis):
     pols.shape = nQ, nbr, natoms, 3
 
     # get atom positions from crystal structure file
-    from danse.ins.matter.Parsers import getParser
+    from diffpy.Structure.Parsers import getParser
     parser = getParser(os.path.splitext(crystal)[-1][1:])
     structure = parser.parseFile(crystal)
     atom_positions = [atom.xyz for atom in structure]
