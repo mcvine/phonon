@@ -155,6 +155,6 @@ def make_crystal_xyz(outpath, atom_chemical_symbols, poscar='POSCAR'):
     ostream = open(outpath, 'wt')
     ostream.write(text)
     return
-    
+
 
 # End of file 

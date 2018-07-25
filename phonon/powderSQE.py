@@ -2,7 +2,11 @@
 import numpy as np, os, glob, histogram as H
 
 
-def from_phonon_data_dir(datadir):
+def from_phonon_data_dir(
+        datadir,
+        max_hkl=1,
+        Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
+):
     from mccomponents.sample.idf import Polarizations, Omega2, units
     from mcvine.phonon.io import readQgridinfo
     # atoms. read it from xyz files
@@ -31,7 +35,11 @@ def from_phonon_data_dir(datadir):
     # atom positions
     positions = np.array([np.array(a.xyz_cartn) for a in uc])
     #
-    Qbb, Ebb, I = compute(omega, pols, positions, Q_basis, gridshape, nbranches=nbranches, max_hkl=1)
+    Qbb, Ebb, I = compute(
+        omega, pols, positions, Q_basis, gridshape,
+        nbranches=nbranches, max_hkl=max_hkl,
+        Q_bins = Q_bins, E_bins = E_bins,
+    )
     IQEhist = H.histogram(
         'IQE',
         (H.axis('Q', boundaries=Qbb, unit='1./angstrom'),
