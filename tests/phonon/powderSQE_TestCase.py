@@ -22,7 +22,7 @@ class TestCase(unittest.TestCase):
         os.chdir(work)
         make_all(
             species=['Si'], supercell_dims=[5,5,5],
-            qgrid_dims=[101,101,101],
+            qgrid_dims=[51,51,51],
             fix_pols_phase=True,
             force_constants='FORCE_CONSTANTS', poscar='POSCAR',
         )
@@ -67,6 +67,14 @@ class TestCase(unittest.TestCase):
              H.axis('E', boundaries=Ebb, unit='meV')),
             data=I)
         hh.dump(IQEhist, 'Si-iqe.h5')
+        return
+
+
+    def test2(self):
+        datadir = self.datadir
+        from mcvine.phonon.powderSQE import from_phonon_data_dir
+        IQEhist = from_phonon_data_dir(datadir)
+        hh.dump(IQEhist, 'Si-iqe-test2.h5')
         return
 
 

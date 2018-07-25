@@ -1,7 +1,45 @@
 
-import numpy as np
+import numpy as np, os, glob, histogram as H
 
 
+def from_phonon_data_dir(datadir):
+    from mccomponents.sample.idf import Polarizations, Omega2, units
+    from mcvine.phonon.io import readQgridinfo
+    # atoms. read it from xyz files
+    xyzfiles = glob.glob(os.path.join(datadir, '*.xyz'))
+    if len(xyzfiles)>1: raise NotImplementedError("more than one xyz files")
+    xyzf = xyzfiles[0]
+    from sampleassembly.crystal.ioutils import xyzfile2unitcell
+    uc = xyzfile2unitcell(xyzf)
+    nAtoms = len(uc)
+    # Qgridinfo
+    reci_basis, gridshape = readQgridinfo(os.path.join(datadir, 'Qgridinfo'))
+    # read data and reformat
+    pols = Polarizations.read(os.path.join(datadir, 'Polarizations'))[1]
+    ndims = 3
+    nbranches = ndims*nAtoms
+    pols.shape = gridshape + (nbranches, nAtoms, 3, 2)
+    _pols = pols
+    pols = _pols[:, :, :, :, :, :, 0] + 1j * _pols[:, :, :, :, :, :, 1]
+    omega2 = Omega2.read(os.path.join(datadir, 'Omega2'))[1]
+    omega2.shape = gridshape + (nbranches,)
+    omega = omega2**.5 * units.hertz2mev
+    # Q basis
+    Q_basis = np.array(reci_basis)
+    # real space basis
+    basis = uc.lattice.base
+    # atom positions
+    positions = np.array([np.array(a.xyz_cartn) for a in uc])
+    #
+    Qbb, Ebb, I = compute(omega, pols, positions, Q_basis, gridshape, nbranches=nbranches, max_hkl=1)
+    IQEhist = H.histogram(
+        'IQE',
+        (H.axis('Q', boundaries=Qbb, unit='1./angstrom'),
+         H.axis('E', boundaries=Ebb, unit='meV')),
+        data=I)
+    return IQEhist
+
+    
 def compute(
         omega, pols, positions, Q_basis, qgrid_shape,
         nbranches=3, max_hkl=1,
