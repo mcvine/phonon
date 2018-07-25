@@ -7,6 +7,13 @@ def compute(
         nbranches=3, max_hkl=1,
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
 ):
+    """
+    omega: shape=(Nq1,Nq2,Nq2,Nbr)
+    pols: complex. shape=(Nq1,Nq2,Nq2,Nbr, nAtoms,3)
+    positions: shape=(nAtoms, 3)
+    Q_basis: shape=(3, 3)
+    qgrid_shape: (Nq1, Nq2, Nq3)
+    """
     I = 0
     Nq1, Nq2, Nq3 = qgrid_shape
     q_hkl = np.mgrid[0:1.00001:1./(Nq1-1), 0:1.00001:1./(Nq2-1), 0:1.00001:1./(Nq3-1)]
