@@ -88,6 +88,8 @@ def make_omega2_pols(
     print "* Writing out freqencies"
     from mccomponents.sample.idf import Omega2, Polarizations
     freq[freq<0] = 0
+    # min = np.min(freq)
+    # if min < 0: freq += -min
     omega2 = freq**2 * 1e24 * (2*np.pi)**2
     Omega2.write(omega2)
 
