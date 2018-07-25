@@ -22,7 +22,9 @@ class TestCase(unittest.TestCase):
         saved = os.path.abspath('.')
         os.chdir(work)
         make_all(
-            species=['Si'], supercell_dims=[5,5,5], qgrid_dims=[11,11,11], fix_pols_phase=True,
+            species=['Si'], supercell_dims=[5,5,5],
+            qgrid_dims=[11,11,11],
+            fix_pols_phase=True,
             force_constants='FORCE_CONSTANTS', poscar='POSCAR',
         )
         os.chdir(saved)
