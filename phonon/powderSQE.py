@@ -75,15 +75,29 @@ def compute(
     tau1 = tau1.copy()
     tau1.shape = 3, -1
     tau1 = tau1.T
+    # max Q of requested Q axis
+    max_Q = Q_bins[-1]
+    # compute max Q for the first reciprocal unit cell
+    max_Q_1uc = np.max(np.linalg.norm(np.dot(q_hkl[indexes], Q_basis), axis=-1))
+    #
     bins = Q_bins, E_bins
     for tau_hkl in tau1:
         tau_hkl = np.array(tau_hkl)
-        print tau_hkl
+        # print tau_hkl,
+        # no need to include this tau point if it is too far away from origin
+        Qtau_cart = np.dot(tau_hkl, Q_basis)
+        Qtau_mag = np.linalg.norm(Qtau_cart)
+        if Qtau_mag - max_Q_1uc > max_Q:
+            # print "skipped"
+            continue
+        else:
+            print tau_hkl
         for ibr in range(nbranches):
-            omega0 = omega[:, :, :, ibr][indexes]
             Q_hkl = tau_hkl + q_hkl[indexes]
             Q_cart = np.dot(Q_hkl, Q_basis)  # nQ, 3
             Q_mag = np.linalg.norm(Q_cart, axis=-1) # nQ
+            #
+            omega0 = omega[:, :, :, ibr][indexes]
             #
             exp_Q_dot_d = np.exp(1j * np.dot(Q_cart, positions.T)) # nQ, natoms
             pols1 = pols[:, :, :, ibr, :, :][indexes] # nQ, natoms, 3

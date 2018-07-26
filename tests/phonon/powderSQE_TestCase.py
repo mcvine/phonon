@@ -8,8 +8,9 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 class TestCase(unittest.TestCase):
 
-    def setUp(self):
-        self.datadir = work = os.path.join(here, '_tmp.powderSQE-Si-phonons')
+    @classmethod
+    def setUpClass(cls):
+        cls.datadir = work = os.path.join(here, '_tmp.powderSQE-Si-phonons')
         if os.path.exists(work):
             shutil.rmtree(work)
         from mcvine import deployment_info
@@ -60,7 +61,7 @@ class TestCase(unittest.TestCase):
         # atom positions
         positions = np.array([np.array(a.xyz_cartn) for a in uc])
         #
-        Qbb, Ebb, I = compute(omega, pols, positions, Q_basis, gridshape, nbranches=nbranches, max_hkl=1)
+        Qbb, Ebb, I = compute(omega, pols, positions, Q_basis, gridshape, nbranches=nbranches, max_hkl=10)
         IQEhist = H.histogram(
             'IQE',
             (H.axis('Q', boundaries=Qbb, unit='1./angstrom'),
@@ -73,7 +74,7 @@ class TestCase(unittest.TestCase):
     def test2(self):
         datadir = self.datadir
         from mcvine.phonon.powderSQE import from_phonon_data_dir
-        IQEhist = from_phonon_data_dir(datadir)
+        IQEhist = from_phonon_data_dir(datadir, max_hkl=10)
         hh.dump(IQEhist, 'Si-iqe-test2.h5')
         return
 
