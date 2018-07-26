@@ -1,3 +1,11 @@
+"""
+The main idea is to follow the formula in Squires.
+
+The integration is over #\tau$ points. 
+For each $\tau$, a grid of q points is considered.
+The phonon data (energies and polarizations) were
+already calculated for those q points.
+"""
 
 import numpy as np, os, glob, histogram as H
 
