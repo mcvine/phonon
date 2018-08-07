@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
     
     def test(self):
         datadir = self.datadir
-        from mcvine.phonon.powderSQE import compute
+        from mcvine.phonon.powderSQE.IDF import compute
         from mccomponents.sample.idf import Polarizations, Omega2, units
         from mcvine.phonon.io import readQgridinfo
         # atoms. read it from xyz files
@@ -73,8 +73,8 @@ class TestCase(unittest.TestCase):
 
     def test2(self):
         datadir = self.datadir
-        from mcvine.phonon.powderSQE import from_phonon_data_dir
-        IQEhist = from_phonon_data_dir(datadir, max_hkl=10)
+        from mcvine.phonon.powderSQE.IDF import from_data_dir
+        IQEhist = from_data_dir(datadir, max_hkl=10)
         hh.dump(IQEhist, 'Si-iqe-test2.h5')
         return
 

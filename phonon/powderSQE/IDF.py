@@ -5,12 +5,22 @@ The integration is over #\tau$ points.
 For each $\tau$, a grid of q points is considered.
 The phonon data (energies and polarizations) were
 already calculated for those q points.
+
+This module exists for backward compatibility only.
+It computes powder SQE spectrum using phonon data already
+calculated in DANSE IDF data format.
+For new materials, use "use_phonopy" module, which
+requires FORCE_CONSTANTS file.
+
+This module is not very generic: should have generated Q points
+randomly and then convert to hkls like what is done
+in "use_phonopy" module.
 """
 
 import numpy as np, os, glob, histogram as H
 
 
-def from_phonon_data_dir(
+def from_data_dir(
         datadir,
         max_hkl=1,
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
