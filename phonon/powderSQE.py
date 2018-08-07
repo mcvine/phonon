@@ -33,6 +33,10 @@ def from_phonon_data_dir(
     pols.shape = gridshape + (nbranches, nAtoms, 3, 2)
     _pols = pols
     pols = _pols[:, :, :, :, :, :, 0] + 1j * _pols[:, :, :, :, :, :, 1]
+    # normalize pol vectors
+    norms = np.linalg.norm(pols, axis=-1)
+    pols/=norms[:, :, :, :, :, np.newaxis]
+    # read omegas
     omega2 = Omega2.read(os.path.join(datadir, 'Omega2'))[1]
     omega2.shape = gridshape + (nbranches,)
     omega = omega2**.5 * units.hertz2mev
