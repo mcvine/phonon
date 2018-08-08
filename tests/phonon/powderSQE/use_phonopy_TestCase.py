@@ -9,7 +9,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 class TestCase(unittest.TestCase):
 
     def test2(self):
-        datadir = os.path.join(here, '..', 'data', 'graphite')
+        datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
         IQEhist = from_FORCE_CONSTANTS(
