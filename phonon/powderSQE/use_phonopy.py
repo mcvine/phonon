@@ -22,7 +22,8 @@ def from_FORCE_CONSTANTS(
         mass = 12, # hack
         species = ['C'], supercell = (6,6,1),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
-        workdir = None, N=int(1e6)
+        workdir = None, N=int(1e6),
+        include_multiphonon=True, scale_multiphonon=1.0,
 ):
     # create and change to workdir
     if workdir is None:
@@ -62,7 +63,7 @@ def from_FORCE_CONSTANTS(
     # run phonopy
     sys.stdout.write("Running phonopy...  "); sys.stdout.flush()
     qs, freqs, pols = call_phonopy.onGrid(
-        ['C'], hkls, sc_mat, 
+        species, hkls, sc_mat, 
         force_constants = force_constants,
         poscar = os.path.join(datadir, 'POSCAR'),
         freq2omega=1
@@ -82,7 +83,7 @@ def from_FORCE_CONSTANTS(
     # normalize polarization vectors
     for iatom in range(natoms):
         qdotr = np.dot(qs, positions[iatom]) * 2 * np.pi
-        phase = np.exp(-1j * qdotr)
+        phase = np.exp(1j * qdotr)
         pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
         norms = np.linalg.norm(pols, axis=-1)
         pols/=norms[:, :, :, np.newaxis]
@@ -121,9 +122,10 @@ def from_FORCE_CONSTANTS(
     correction = np.outer(correction_Q, correction_E)
     I*=correction
     # # Correction 2 - DW
-    dos_e = doshist.E
-    dos_g = doshist.I
-    DW2 = phonon.DWExp(Q, M=mass, E=dos_e,g=dos_g/np.sum(dos_g), beta=beta, dE=dos_e[1]-dos_e[0])
+    dos_e = doshist.E if hasattr(doshist, 'E') else doshist.energy
+    dos_dE = dos_e[1]-dos_e[0]
+    dos_g = doshist.I / np.sum(doshist.I) /dos_dE
+    DW2 = phonon.DWExp(Q, M=mass, E=dos_e,g=dos_g, beta=beta, dE=dos_e[1]-dos_e[0])
     I*=np.exp(-DW2)[:, np.newaxis]
     IQEhist = H.histogram(
         'IQE',
@@ -166,9 +168,33 @@ def from_FORCE_CONSTANTS(
         I[Q<Qmin1, iE] = np.nan
         I[Q>Qmax1, iE] = np.nan
     #
-    ## multiphonon
-    mpsqe = phonon.sqehist(
-        dos_e, dos_g/np.sum(dos_g), Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=5, starting_order=2, Emax=E[-1]*3)
-    mpsqe1 = interp_sqe(mpsqe, E)
+    if include_multiphonon:
+        ## multiphonon
+        mpsqe = phonon.sqehist(
+            dos_e, dos_g, Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=5, starting_order=2, Emax=E[-1]*3)
+        mpsqe1 = interp_sqe(mpsqe, E)
+        mpsqe1.I *= scale_multiphonon; mpsqe1.E2 *= scale_multiphonon*scale_multiphonon
+    else:
+        mpsqe1 = (0,0)
     os.chdir(saved)
+    # return IQEhist
     return mpsqe1 + IQEhist*(8*np.pi,0)
+
+def multiphononSQE(
+        T=300., # kelvin
+        doshist=None, # DOS histogram
+        mass = 12, # hack
+        Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
+):
+    dos_e = doshist.E if hasattr(doshist, 'E') else doshist.energy
+    dos_dE = dos_e[1]-dos_e[0]
+    dos_g = doshist.I / np.sum(doshist.I) /dos_dE
+    Qbb = Q_bins
+    Q = (Qbb[1:] + Qbb[:-1])/2
+    dQ = Qbb[1]-Qbb[0]
+    Ebb = E_bins
+    E = (Ebb[1:] + Ebb[:-1])/2
+    mpsqe = phonon.sqehist(
+        dos_e, dos_g, Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=5, starting_order=2, Emax=E[-1]*3)
+    mpsqe1 = interp_sqe(mpsqe, E)
+    return mpsqe1
