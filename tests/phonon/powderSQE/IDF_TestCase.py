@@ -10,7 +10,7 @@ class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.datadir = work = os.path.join(here, '_tmp.powderSQE-Si-phonons')
+        cls.datadir = work = os.path.join(here, '_tmp.IDF-Si-phonons')
         if os.path.exists(work):
             shutil.rmtree(work)
         from mcvine import deployment_info
