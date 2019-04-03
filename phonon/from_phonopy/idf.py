@@ -104,7 +104,7 @@ def make_omega2_pols(
         positions = atoms.get_scaled_positions()
         # correct polarization vectors
         # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb
-        # c.c. is needed because of another convention difference between phonopy and pybvk codes.
+        # c.c. is needed at the very end because of another convention difference between phonopy and pybvk codes.
         # without c.c., we have to use exp(-j Q dot r) instead of exp(j Q dot r)
         for iatom in range(natoms):
             qdotr = np.dot(Qs, positions[iatom]) * 2 * np.pi
@@ -112,8 +112,8 @@ def make_omega2_pols(
             pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
             norms = np.linalg.norm(pols, axis=-1)
             pols/=norms[:, :, :, np.newaxis]
-            pols = np.conj(pols)
             continue
+        pols = np.conj(pols)
     Polarizations.write(pols)
     return
 
