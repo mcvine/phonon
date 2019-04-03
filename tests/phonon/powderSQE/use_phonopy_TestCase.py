@@ -33,7 +33,35 @@ class TestCase(unittest.TestCase):
         return
 
 
-    def test2(self):
+    def test2a(self):
+        datadir = os.path.join(here, '..', '..', 'data', 'graphite')
+        doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
+        from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
+        IQEhist = from_FORCE_CONSTANTS(
+            datadir,
+            Ei = 30., # meV
+            T=300., # kelvin
+            doshist = doshist, # DOS histogram
+            mass = 12, # hack
+            species = ['C'], supercell = (6,6,1),
+            Q_bins = np.arange(0, 4, 0.04), E_bins = np.arange(0, 30, .2),
+            workdir = '_tmp.test2a', N=int(1e5), include_multiphonon=False,
+            max_det_angle=60.,
+        )
+        # hh.dump(IQEhist, 'graphite-single-phonon-Ei_30-T_300.h5')
+        expected = hh.load('saved_results/graphite-single-phonon-Ei_30-T_300-N_3e6.h5')
+        max = np.nanmax(expected.I)
+        reldiff = IQEhist-expected
+        reldiff.I/=max; reldiff.E2/=max*max
+        Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
+        Ngood = (IQEhist.I==IQEhist.I).sum()
+        Ntotal = IQEhist.size()
+        self.assert_(Ngood*1./Ntotal>.5)
+        self.assert_(Nbigdiff*1./Ngood<.05)
+        return
+
+
+    def test2b(self):
         datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
@@ -47,7 +75,7 @@ class TestCase(unittest.TestCase):
             Q_bins = np.arange(0, 23, 0.1), E_bins = np.arange(0, 250, 1),
             workdir = '_tmp.powderSQE', N=int(1e5), include_multiphonon=False
         )
-        hh.dump(IQEhist, 'graphite-singlephonon-Ei_300-T_300.h5')
+        # hh.dump(IQEhist, 'graphite-singlephonon-Ei_300-T_300.h5')
         expected = hh.load('saved_results/graphite-single-phonon-Ei_300-T_300-N_1e7.h5')
         max = np.nanmax(expected.I)
         reldiff = IQEhist-expected
