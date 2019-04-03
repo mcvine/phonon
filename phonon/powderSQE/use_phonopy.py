@@ -23,7 +23,7 @@ def from_FORCE_CONSTANTS(
         species = ['C'], supercell = (6,6,1),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         workdir = None, N=int(1e6),
-        include_multiphonon=True, scale_multiphonon=1.0,
+        include_multiphonon=True, scale_multiphonon=1.0, max_det_angle=135.,
 ):
     # create and change to workdir
     if workdir is None:
@@ -97,8 +97,9 @@ def from_FORCE_CONSTANTS(
         Qmag_good = Qmag[good1]
         omega_good = omega[good1, ibr]
         Q_cart = Qpoints[good1, :]
+        good_hkls = hkls[good1, :]
         #
-        exp_Q_dot_d = np.exp(1j * np.dot(Q_cart, positions.T)) # nQ, natoms 
+        exp_Q_dot_d = np.exp(-1j * np.dot(good_hkls, positions.T) * 2*np.pi) # nQ, natoms
         pols1 = pols[good1, ibr, :, :] # nQ, natoms, 3   
         Q_dot_pol = np.sum(np.transpose(pols1, (1,0,2)) * Q_cart, axis=-1).T # nQ, natoms
         # 
@@ -110,7 +111,7 @@ def from_FORCE_CONSTANTS(
     I *= 1./mass * conversion.k2e(1.)
     Q = (Qbb[1:] + Qbb[:-1])/2
     # correction 1
-    ki = conversion.e2k(300.)
+    ki = conversion.e2k(Ei)
     E = (Ebb[1:] + Ebb[:-1])/2
     Ef = Ei - E
     kf = conversion.e2k(Ef)
@@ -162,7 +163,7 @@ def from_FORCE_CONSTANTS(
     #
     ## Dynamical range
     DR_Qmin = ki-kf
-    DR_Qmax = ((ki*ki + kf*kf - 2*ki*kf*np.cos(135.*np.pi/180)))**.5
+    DR_Qmax = ((ki*ki + kf*kf - 2*ki*kf*np.cos(max_det_angle*np.pi/180)))**.5
     I = IQEhist.I
     for iE, (E1, Qmin1, Qmax1) in enumerate(zip(E, DR_Qmin, DR_Qmax)):
         I[Q<Qmin1, iE] = np.nan
