@@ -84,7 +84,8 @@ def compute(
     """
     I = 0
     Nq1, Nq2, Nq3 = qgrid_shape
-    q_hkl = np.mgrid[0:1.00001:1./(Nq1-1), 0:1.00001:1./(Nq2-1), 0:1.00001:1./(Nq3-1)]
+    end = 1.00001
+    q_hkl = np.mgrid[0:end:1./(Nq1-1), 0:end:1./(Nq2-1), 0:end:1./(Nq3-1)]
     q_hkl = np.transpose(q_hkl, (1,2,3,0))
     # print q_hkl.shape
     # create indexes array

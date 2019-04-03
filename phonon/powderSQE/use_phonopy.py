@@ -80,13 +80,17 @@ def from_FORCE_CONSTANTS(
     from phonopy.interface import vasp
     atoms = vasp.read_vasp(poscar, species)
     positions = atoms.get_scaled_positions()
-    # normalize polarization vectors
+    # correct polarization vectors
+    # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb
+    # c.c. is needed because of another convention difference between phonopy and pybvk codes.
+    # without c.c., we have to use exp(-j Q dot r) instead of exp(j Q dot r)
     for iatom in range(natoms):
         qdotr = np.dot(qs, positions[iatom]) * 2 * np.pi
         phase = np.exp(1j * qdotr)
         pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
         norms = np.linalg.norm(pols, axis=-1)
         pols/=norms[:, :, :, np.newaxis]
+        pols = np.conj(pols)
         continue
     # Compute
     import tqdm
@@ -99,7 +103,7 @@ def from_FORCE_CONSTANTS(
         Q_cart = Qpoints[good1, :]
         good_hkls = hkls[good1, :]
         #
-        exp_Q_dot_d = np.exp(-1j * np.dot(good_hkls, positions.T) * 2*np.pi) # nQ, natoms
+        exp_Q_dot_d = np.exp(1j * np.dot(good_hkls, positions.T) * 2*np.pi) # nQ, natoms
         pols1 = pols[good1, ibr, :, :] # nQ, natoms, 3   
         Q_dot_pol = np.sum(np.transpose(pols1, (1,0,2)) * Q_cart, axis=-1).T # nQ, natoms
         # 
