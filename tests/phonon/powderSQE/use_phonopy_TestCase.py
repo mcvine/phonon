@@ -3,6 +3,8 @@
 skip = True # this test needs phonopy
 
 import unittest, os, glob, sys, shutil, numpy as np, histogram as H, histogram.hdf as hh
+from multiphonon import sqe as mpsqe
+from matplotlib import pyplot as plt
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -48,16 +50,18 @@ class TestCase(unittest.TestCase):
             workdir = '_tmp.test2a', N=int(1e5), include_multiphonon=False,
             max_det_angle=60.,
         )
-        # hh.dump(IQEhist, 'graphite-single-phonon-Ei_30-T_300.h5')
-        expected = hh.load('saved_results/graphite-single-phonon-Ei_30-T_300-N_3e6.h5')
-        max = np.nanmax(expected.I)
-        reldiff = IQEhist-expected
-        reldiff.I/=max; reldiff.E2/=max*max
-        Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
-        Ngood = (IQEhist.I==IQEhist.I).sum()
-        Ntotal = IQEhist.size()
-        self.assert_(Ngood*1./Ntotal>.5)
-        self.assert_(Nbigdiff*1./Ngood<.05)
+        hh.dump(IQEhist, 'graphite-single-phonon-Ei_30-T_300.h5') # save for inspection
+        expectedIQEhist = hh.load('saved_results/graphite-single-phonon-Ei_30-T_300-N_3e6.h5')
+        expected = expectedIQEhist.I
+        # scale it to sth that is easy to get "errorbar"
+        N = 3e6
+        scale = N/np.nansum(expected)
+        expected *= scale; max = np.nanmax(expected)
+        this = IQEhist.I; this*=scale
+        plt.figure(figsize=(6,3))
+        plt.subplot(1,2,1);  mpsqe.plot(IQEhist); plt.clim(0, max/10)
+        plt.subplot(1,2,2);  mpsqe.plot(expectedIQEhist); plt.clim(0, max/10)
+        plt.show()
         return
 
 
