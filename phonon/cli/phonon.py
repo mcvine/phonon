@@ -159,14 +159,8 @@ def slice(crystal, phonon, start, end, npts, cartesian, outhist, eaxis):
 
 
 def recibasis_fromQgridinfo(path):
-    # read reciprocal basis vectors from Qgridinfo
-    import os
-    lines = open(path).readlines(3)
-    d = {}
-    for line in lines:
-        exec(line, d)
-        continue
-    reci_basis = [d['b1'], d['b2'], d['b3']]
+    from ..io import readQgridinfo
+    reci_basis, shape = readQgridinfo(path)
     return reci_basis
 
 

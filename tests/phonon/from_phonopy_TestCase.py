@@ -9,7 +9,7 @@ here = os.path.dirname(__file__)
 class TestCase(unittest.TestCase):
     
     def test(self):
-        "mcvine.phonon.from_phonopy: make_all"
+        "mcvine.phonon.from_phonopy: make_IDF_datadir"
         work = '_tmp'
         if os.path.exists(work):
             shutil.rmtree(work)
@@ -18,11 +18,13 @@ class TestCase(unittest.TestCase):
         src = sample(name='Si', temperature='100K', shape='dummy')
         src = os.path.join(os.path.dirname(src), 'phonons', 'vasp-phonopy')
         shutil.copytree(src, work)
-        from mcvine.phonon.from_phonopy import make_all
+        from mcvine.phonon.from_phonopy import make_IDF_datadir
         saved = os.path.abspath('.')
         os.chdir(work)
-        make_all(
-            species=['Si'], supercell_dims=[5,5,5], qgrid_dims=[11,11,11], fix_pols_phase=True,
+        make_IDF_datadir(
+            species=['Si'], supercell_dims=[5,5,5],
+            qgrid_dims=[11,11,11],
+            fix_pols_phase=True,
             force_constants='FORCE_CONSTANTS', poscar='POSCAR',
         )
         os.chdir(saved)
