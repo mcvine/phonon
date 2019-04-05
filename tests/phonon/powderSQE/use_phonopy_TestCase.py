@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 skip = True # this test needs phonopy
+plot = True
 
 import unittest, os, glob, sys, shutil, numpy as np, histogram as H, histogram.hdf as hh
-from multiphonon import sqe as mpsqe
-from matplotlib import pyplot as plt
+if plot:
+    from multiphonon import sqe as mpsqe
+    from matplotlib import pyplot as plt
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,6 +41,8 @@ class TestCase(unittest.TestCase):
         datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
+        if plot: N = int(1e5)
+        else: N = int(1e6)
         IQEhist = from_FORCE_CONSTANTS(
             datadir,
             Ei = 30., # meV
@@ -47,7 +51,7 @@ class TestCase(unittest.TestCase):
             mass = 12, # hack
             species = ['C'], supercell = (6,6,1),
             Q_bins = np.arange(0, 4, 0.04), E_bins = np.arange(0, 30, .2),
-            workdir = '_tmp.test2a', N=int(1e5), include_multiphonon=False,
+            workdir = '_tmp.test2a', N=N, include_multiphonon=False,
             max_det_angle=60.,
         )
         hh.dump(IQEhist, 'graphite-single-phonon-Ei_30-T_300.h5') # save for inspection
@@ -58,10 +62,11 @@ class TestCase(unittest.TestCase):
         scale = N/np.nansum(expected)
         expected *= scale; max = np.nanmax(expected)
         this = IQEhist.I; this*=scale
-        plt.figure(figsize=(6,3))
-        plt.subplot(1,2,1);  mpsqe.plot(IQEhist); plt.clim(0, max/10)
-        plt.subplot(1,2,2);  mpsqe.plot(expectedIQEhist); plt.clim(0, max/10)
-        plt.show()
+        if plot:
+            plt.figure(figsize=(6,3))
+            plt.subplot(1,2,1);  mpsqe.plot(IQEhist); plt.clim(0, max/50)
+            plt.subplot(1,2,2);  mpsqe.plot(expectedIQEhist); plt.clim(0, max/50)
+            plt.show()
         return
 
 
