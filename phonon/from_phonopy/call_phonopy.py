@@ -57,6 +57,31 @@ def onGrid(
     pols = np.transpose(pols, (0, 2, 1))
     pols.shape = pols.shape[:-1] + (-1, 3)
     # pols: Q, branch, atom, xyz
+
+    print "* Discarding negative freqencies"
+    freq[freq<0] = 0
+    # min = np.min(freq)
+    # if min < 0: freq += -min
+
+    # correction for pols
+    print "* Fixing polarizations"
+    nq, nbr, natoms, three = pols.shape
+    assert three is 3
+    atoms = vasp.read_vasp(poscar, atom_chemical_symbols)
+    positions = atoms.get_scaled_positions()
+    # correct polarization vectors
+    # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb
+    # c.c. is needed at the very end because of another convention difference between phonopy and pybvk codes.
+    # without c.c., we have to use exp(-j Q dot r) instead of exp(j Q dot r) in calculation of dynamical factors
+    for iatom in range(natoms):
+        qdotr = np.dot(qpoints, positions[iatom]) * 2 * np.pi
+        phase = np.exp(1j * qdotr)
+        pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
+        norms = np.linalg.norm(pols, axis=-1)
+        pols/=norms[:, :, :, np.newaxis]
+        continue
+    pols = np.conj(pols)
+    #
     return qpoints, freq, pols
 
 

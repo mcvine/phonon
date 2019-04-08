@@ -7,7 +7,6 @@
 utils to create phonon data in IDF format from phonopy data
 """
 
-from . import call_phonopy
 from phonopy.interface import vasp
 
 import numpy as np
@@ -83,7 +82,8 @@ def make_omega2_pols(
     # !!! follow vasp convention !!!
     supercell_matrix = np.diag(supercell_dims)
     print "* Calling phonopy to compute eigen values and eigen vectors"
-    qvecs, freq, pols = call_phonopy.onGrid(species, Qs, supercell_matrix, force_constants, freq2omega=1, poscar=poscar)
+    from . import onGrid
+    qvecs, freq, pols = onGrid(species, Qs, supercell_matrix, force_constants, freq2omega=1, poscar=poscar)
     
     print "* Writing out freqencies"
     from mccomponents.sample.idf import Omega2, Polarizations
@@ -92,28 +92,7 @@ def make_omega2_pols(
     # if min < 0: freq += -min
     omega2 = freq**2 * 1e24 * (2*np.pi)**2
     Omega2.write(omega2)
-
-    # phase factor for pols
-    from phonopy.interface import vasp
-    print "* Fixing and writing out polarizations"
-    nq, nbr, natoms, three = pols.shape
-    assert three is 3
-    if fix_phase:
-        print "* Fixing phase: exp(i Q.d)"
-        atoms = vasp.read_vasp(poscar, species)
-        positions = atoms.get_scaled_positions()
-        # correct polarization vectors
-        # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb
-        # c.c. is needed at the very end because of another convention difference between phonopy and pybvk codes.
-        # without c.c., we have to use exp(-j Q dot r) instead of exp(j Q dot r)
-        for iatom in range(natoms):
-            qdotr = np.dot(Qs, positions[iatom]) * 2 * np.pi
-            phase = np.exp(1j * qdotr)
-            pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
-            norms = np.linalg.norm(pols, axis=-1)
-            pols/=norms[:, :, :, np.newaxis]
-            continue
-        pols = np.conj(pols)
+    print "* Writing out polarizations"
     Polarizations.write(pols)
     return
 

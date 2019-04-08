@@ -19,11 +19,14 @@ in "use_phonopy" module.
 
 import numpy as np, os, glob, histogram as H
 
-
 def from_data_dir(
         datadir,
         max_hkl=1,
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
+        mass = 12., # "average" mass
+        doshist=None,
+        T=300., Ei=100., max_det_angle=135.,
+        include_multiphonon=True,
 ):
     from mccomponents.sample.idf import Polarizations, Omega2, units
     from mcvine.phonon.io import readQgridinfo
@@ -57,16 +60,16 @@ def from_data_dir(
     # atom positions
     positions = np.array([np.array(a.xyz_cartn) for a in uc])
     #
-    Qbb, Ebb, I = compute(
+    Qbb, Ebb, I, NQpoints = compute(
         omega, pols, positions, Q_basis, gridshape,
         nbranches=nbranches, max_hkl=max_hkl,
         Q_bins = Q_bins, E_bins = E_bins,
     )
-    IQEhist = H.histogram(
-        'IQE',
-        (H.axis('Q', boundaries=Qbb, unit='1./angstrom'),
-         H.axis('E', boundaries=Ebb, unit='meV')),
-        data=I)
+    from .use_phonopy import _apply_corrections
+    IQEhist = _apply_corrections(I, Qbb, Ebb, NQpoints, mass, uc, doshist, T, Ei, max_det_angle)
+    if include_multiphonon:
+        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=mass, Q_bins=Q_bins, E_bins=E_bins)
+        IQEhist += mphIQE
     return IQEhist
 
     
@@ -104,6 +107,7 @@ def compute(
     max_Q_1uc = np.max(np.linalg.norm(np.dot(q_hkl[indexes], Q_basis), axis=-1))
     #
     bins = Q_bins, E_bins
+    NQpoints = 0 # number of Q points included in calculation
     for tau_hkl in tau1:
         tau_hkl = np.array(tau_hkl)
         # print tau_hkl,
@@ -130,6 +134,7 @@ def compute(
             M = np.abs(F)**2 # nQ
             I1, Qbb, Ebb = np.histogram2d(Q_mag, omega0, bins=bins, weights=M)
             I = I + I1
+        NQpoints += (Nq1-1)*(Nq2-1)*(Nq3-1)
         continue
-    return Qbb, Ebb, I
+    return Qbb, Ebb, I, NQpoints
 
