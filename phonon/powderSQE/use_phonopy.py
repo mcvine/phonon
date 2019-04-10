@@ -10,7 +10,7 @@ from multiphonon.sqe import plot as plotsqe, interp as interp_sqe
 from multiphonon.forward.phonon import kelvin2mev
 import multiphonon
 from multiphonon.forward import phonon
-from mcvine.phonon.from_phonopy import call_phonopy
+from mcvine.phonon.from_phonopy import onGrid
 from mcni.utils import conversion
 
 
@@ -62,12 +62,13 @@ def from_FORCE_CONSTANTS(
     hkls = np.dot(Qpoints, uc.lattice.base.T)/(2*np.pi)
     # run phonopy
     sys.stdout.write("Running phonopy...  "); sys.stdout.flush()
-    qs, freqs, pols = call_phonopy.onGrid(
+    qs, freqs, pols = onGrid(
         species, hkls, sc_mat, 
         force_constants = force_constants,
         poscar = os.path.join(datadir, 'POSCAR'),
         freq2omega=1
     )
+    os.chdir(saved)
     sys.stdout.write("Done"); sys.stdout.flush()
     good = freqs > 0
     # omega2 = freqs**2 * 1e24 * (2*np.pi)**2
@@ -80,18 +81,6 @@ def from_FORCE_CONSTANTS(
     from phonopy.interface import vasp
     atoms = vasp.read_vasp(poscar, species)
     positions = atoms.get_scaled_positions()
-    # correct polarization vectors
-    # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb
-    # c.c. is needed at the very end because of another convention difference between phonopy and pybvk codes.
-    # without c.c., we have to use exp(-j Q dot r) instead of exp(j Q dot r)
-    for iatom in range(natoms):
-        qdotr = np.dot(qs, positions[iatom]) * 2 * np.pi
-        phase = np.exp(1j * qdotr)
-        pols[:, :, iatom, :] *= phase[:, np.newaxis, np.newaxis]
-        norms = np.linalg.norm(pols, axis=-1)
-        pols/=norms[:, :, :, np.newaxis]
-        continue
-    pols = np.conj(pols)
     # Compute
     import tqdm
     bins = Q_bins, E_bins
@@ -112,6 +101,14 @@ def from_FORCE_CONSTANTS(
         I1, Qbb, Ebb = np.histogram2d(Qmag_good, omega_good, bins=bins, weights=M)
         I = I + I1
         continue
+    IQEhist = _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle)
+    if include_multiphonon:
+        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=mass, Q_bins=Q_bins, E_bins=E_bins)
+        IQEhist += mphIQE
+    return IQEhist
+
+
+def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
     I *= 1./mass * conversion.k2e(1.)
     Q = (Qbb[1:] + Qbb[:-1])/2
     # correction 1
@@ -172,6 +169,8 @@ def from_FORCE_CONSTANTS(
     for iE, (E1, Qmin1, Qmax1) in enumerate(zip(E, DR_Qmin, DR_Qmax)):
         I[Q<Qmin1, iE] = np.nan
         I[Q>Qmax1, iE] = np.nan
+    rt = IQEhist; scale = 8*np.pi; rt.I*=scale; rt.E2*=scale*scale
+    return rt
     #
     if include_multiphonon:
         ## multiphonon
@@ -181,7 +180,6 @@ def from_FORCE_CONSTANTS(
         mpsqe1.I *= scale_multiphonon; mpsqe1.E2 *= scale_multiphonon*scale_multiphonon
     else:
         mpsqe1 = (0,0)
-    os.chdir(saved)
     # return IQEhist
     return mpsqe1 + IQEhist*(8*np.pi,0)
 
