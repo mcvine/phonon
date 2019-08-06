@@ -13,8 +13,8 @@ import numpy as np
 
 
 def make_all(
-        species, supercell_dims=[5,5,5], qgrid_dims=[51,51,51], fix_pols_phase=True,
-        force_constants='FORCE_CONSTANTS', poscar='POSCAR',
+        species=None, supercell_dims=None, qgrid_dims=[51,51,51], fix_pols_phase=True,
+        force_constants='FORCE_CONSTANTS', poscar='POSCAR', sposcar='SPOSCAR',
 ):
     """ compute all phonon data needed by the single crystal phonon kernel.
     
@@ -30,6 +30,12 @@ def make_all(
       - DOS
     
     """
+    if species is None:
+        # read species from POSCAR
+        atoms = vasp.read_vasp(poscar)
+        species = set(atoms.get_chemical_symbols())
+    if supercell_dims is None:
+        supercell_dims = _calc_sc_dims(poscar, sposcar)
     make_omega2_pols(
         species, supercell_dims, qgrid_dims, 
         force_constants=force_constants, poscar=poscar, fix_phase = fix_pols_phase
@@ -41,6 +47,26 @@ def make_all(
     make_crystal_xyz(xtal_xyz, species, poscar)
     return
 
+
+def _calc_sc_dims(poscar, sposcar):
+    cell = vasp.read_vasp(poscar).cell
+    sc = vasp.read_vasp(sposcar).cell
+    return [_calc_int_scale_factor(v1, v2) for v1,v2 in zip(cell, sc)]
+
+def _calc_scale_factor(v1, v2):
+    "v1 and v2 has to be parallel. compute the number s that satisfy v2 = s * v1"
+    norm1 = np.linalg.norm(v1); norm2 = np.linalg.norm(v2)
+    nv1 = v1/norm1; nv2 = v2/norm2
+    if np.linalg.norm(np.cross(nv1, nv2))>1e-3: raise RuntimeError("%s and %s are not parallel" % (v1, v2))
+    return norm2/norm1
+
+def _calc_int_scale_factor(v1, v2):
+    "v1 and v2 has to be parallel. compute the integer s that satisfy v2 = s * v1"
+    s = _calc_scale_factor(v1, v2)
+    i = int(s)
+    if abs(i-s) > 1e-3:
+        raise RuntimeError("(%s)/(%s) is not a whole number" % (v2, v1))
+    return i
 
 def make_omega2_pols(
         species, supercell_dims=[5,5,5], qgrid_dims=[51,51,51],

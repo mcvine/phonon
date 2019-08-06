@@ -45,9 +45,9 @@ class TestCase(unittest.TestCase):
         os.chdir(saved)
         # expected result
         expected = dict(
-            b1 = [2.5685606819895899, 1.482959201179558, 0.0],
-            b2 = [0.0, 2.965918402346992, 0.0],
-            b3 = [0.0, 0.0, 0.94423940958673136],
+            b1 = [2.5535175596113087, 1.4742740501120735, 0.0],
+            b2 = [0.0, 2.948548100224147, 0.0],
+            b3 = [0.0, 0.0, 0.9370895312721231],
             n1 = 51,
             n2 = 51,
             n3 = 51,
@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
         exec(open(os.path.join(work, 'Qgridinfo')).read(), res)
         # compare
         for k,v in expected.iteritems():
-            assert v == res[k]
+            assert np.allclose(v,res[k]), "%s vs %s" % (v, res[k])
         return
 
 

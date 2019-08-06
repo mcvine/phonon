@@ -23,10 +23,10 @@ class TestCase(unittest.TestCase):
         os.chdir(work)
         from mcvine.phonon.from_phonopy import make_all
         make_all(
-            species=['C'], supercell_dims=[6,6,1],
+            # species=['C'], supercell_dims=[6,6,1],
             qgrid_dims=[51,51,51],
             fix_pols_phase=True,
-            force_constants='FORCE_CONSTANTS', poscar='POSCAR',
+            force_constants='FORCE_CONSTANTS', poscar='POSCAR', sposcar='SPOSCAR',
         )
         return
     
