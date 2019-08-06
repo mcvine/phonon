@@ -19,8 +19,10 @@ def make_all(
     """ compute all phonon data needed by the single crystal phonon kernel.
     
     Inputs:
-      - species: list of atomic species
+      - poscar and sposcar: POSCAR and SPOSCAR file paths. 
+      - species: list of atomic species. if None, will infer from POSCAR
       - supercell_dims: supercell dimensions, eg "5 5 5". should be consistent with the FORCE_CONSTANTS file
+        if None, will infer from SPOSCAR
       - qgrid_dims: Q grid dimensions
     
     Output:
