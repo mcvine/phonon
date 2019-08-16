@@ -12,6 +12,7 @@ class TestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.datadir = work = os.path.join(here, '_tmp.IDF-Si-phonons')
         if os.path.exists(work):
+            return
             shutil.rmtree(work)
         from mcvine import deployment_info
         from mcvine.resources import sample
@@ -33,8 +34,30 @@ class TestCase(unittest.TestCase):
     def test2(self):
         datadir = self.datadir
         from mcvine.phonon.powderSQE.IDF import from_data_dir
-        IQEhist = from_data_dir(datadir, max_hkl=10)
-        hh.dump(IQEhist, 'Si-iqe-test2.h5')
+        import mcvine.phonon.powderSQE.IDF as psidf
+        from mccomponents.sample import phonon as mcphonon
+        doshist = mcphonon.read_dos.dos_fromidf(os.path.join(datadir, 'DOS')).doshist
+        disp = psidf.disp_from_datadir(datadir)
+        IQEhist = psidf.from_data_dir(
+            datadir=datadir,
+            disp=disp,
+            N = int(1e6),
+            Q_bins=np.arange(0, 14, 0.1), E_bins=np.arange(0,90,.5),
+            mass=28., species=['Si'],
+            doshist=doshist,
+            T=300., Ei=120., max_det_angle=140.,
+            include_multiphonon=True,
+        )
+        expected = hh.load(os.path.join(here, 'saved_results/Si-all-phonon-Ei_120-T_300-N_1e6.h5'))
+        max = np.nanmax(expected.I)
+        reldiff = IQEhist-expected
+        reldiff.I/=max; reldiff.E2/=max*max
+        Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
+        Ngood = (IQEhist.I==IQEhist.I).sum()
+        Ntotal = IQEhist.size()
+        self.assert_(Ngood*1./Ntotal>.65)
+        self.assert_(Nbigdiff*1./Ngood<.10)
+        # hh.dump(IQEhist, 'Si-iqe-test2.h5')
         return
 
 

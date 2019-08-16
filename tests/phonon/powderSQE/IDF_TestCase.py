@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
             T=300., Ei=30., max_det_angle=60.,
             include_multiphonon=False,
         )
-        hh.dump(IQEhist, 'graphite-singlephonon-Ei_30-T_300-IDF.h5')
+        # hh.dump(IQEhist, 'graphite-singlephonon-Ei_30-T_300-IDF.h5')
         if plot:
             plt.figure(figsize=(6,3))
             max = np.nanmax(IQEhist.I)

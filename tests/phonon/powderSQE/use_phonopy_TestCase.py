@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 skip = True # this test needs phonopy
-plot = True
+# plot = True
 
 import unittest, os, glob, sys, shutil, numpy as np, histogram as H, histogram.hdf as hh
 if plot:
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
             max_det_angle=60.,
         )
         hh.dump(IQEhist, 'graphite-single-phonon-Ei_30-T_300.h5') # save for inspection
-        expectedIQEhist = hh.load('saved_results/graphite-single-phonon-Ei_30-T_300-N_3e6.h5')
+        expectedIQEhist = hh.load(os.path.join(here, 'saved_results/graphite-single-phonon-Ei_30-T_300-N_3e6.h5'))
         expected = expectedIQEhist.I
         # scale it to sth that is easy to get "errorbar"
         N = 3e6
@@ -66,6 +66,7 @@ class TestCase(unittest.TestCase):
             plt.figure(figsize=(6,3))
             plt.subplot(1,2,1);  mpsqe.plot(IQEhist); plt.clim(0, max/50)
             plt.subplot(1,2,2);  mpsqe.plot(expectedIQEhist); plt.clim(0, max/50)
+            plt.tight_layout()
             plt.show()
         return
 
@@ -74,6 +75,7 @@ class TestCase(unittest.TestCase):
         datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
+        N = int(1e5)
         IQEhist = from_FORCE_CONSTANTS(
             datadir,
             Ei = 300., # meV
@@ -82,18 +84,24 @@ class TestCase(unittest.TestCase):
             mass = 12, # hack
             species = ['C'], supercell = (6,6,1),
             Q_bins = np.arange(0, 23, 0.1), E_bins = np.arange(0, 250, 1),
-            workdir = '_tmp.powderSQE', N=int(1e5), include_multiphonon=False
+            workdir = '_tmp.powderSQE', N=N, include_multiphonon=False
         )
-        # hh.dump(IQEhist, 'graphite-singlephonon-Ei_300-T_300.h5')
-        expected = hh.load('saved_results/graphite-single-phonon-Ei_300-T_300-N_1e7.h5')
+        hh.dump(IQEhist, 'graphite-singlephonon-Ei_300-T_300.h5')
+        expected = hh.load(os.path.join(here, 'saved_results/graphite-single-phonon-Ei_300-T_300-N_1e7.h5'))
         max = np.nanmax(expected.I)
+        if plot:
+            plt.figure(figsize=(6,3))
+            plt.subplot(1,2,1);  mpsqe.plot(IQEhist); plt.clim(0, max/50)
+            plt.subplot(1,2,2);  mpsqe.plot(expected); plt.clim(0, max/50)
+            plt.tight_layout()
+            plt.show()
         reldiff = IQEhist-expected
         reldiff.I/=max; reldiff.E2/=max*max
         Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
         Ngood = (IQEhist.I==IQEhist.I).sum()
         Ntotal = IQEhist.size()
         self.assert_(Ngood*1./Ntotal>.65)
-        self.assert_(Nbigdiff*1./Ngood<.05)
+        self.assert_(Nbigdiff*1./Ngood<.10)
         return
 
 
