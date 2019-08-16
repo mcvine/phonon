@@ -2,6 +2,7 @@
 
 skip = True # this test needs phonopy
 # plot = True
+plot = False
 
 import unittest, os, glob, sys, shutil, numpy as np, histogram as H, histogram.hdf as hh
 if plot:
