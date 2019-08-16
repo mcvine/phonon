@@ -39,6 +39,7 @@ install:
   - mkdir -p $MCVINE_PHONON_BLD_ROOT && cd $MCVINE_PHONON_BLD_ROOT 
   - cmake -DCMAKE_INSTALL_PREFIX=$EXPORT_ROOT -DPYTHON_LIBRARY=$CONDA_PREFIX/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=$CONDA_PREFIX/include/python2.7 $SRC
   - make install
+  - cd -
 
 script:
   - cd tests
