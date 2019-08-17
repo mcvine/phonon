@@ -42,8 +42,7 @@ class TestCase(unittest.TestCase):
         datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
-        if plot: N = int(1e5)
-        else: N = int(1e6)
+        N = int(1e5)
         IQEhist = from_FORCE_CONSTANTS(
             datadir,
             Ei = 30., # meV
