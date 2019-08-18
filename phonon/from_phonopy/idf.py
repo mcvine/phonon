@@ -13,7 +13,8 @@ import numpy as np
 
 
 def make_all(
-        species=None, supercell_dims=None, qgrid_dims=[51,51,51], fix_pols_phase=True,
+        species = None,
+        supercell_dims=None, qgrid_dims=[51,51,51], fix_pols_phase=True,
         force_constants='FORCE_CONSTANTS', poscar='POSCAR', sposcar='SPOSCAR',
 ):
     """ compute all phonon data needed by the single crystal phonon kernel.
@@ -32,21 +33,26 @@ def make_all(
       - DOS
     
     """
+    # TODO: implement new arg "positions". Right now POSCAR is required to get positions
+    # TODO: `make_crystal_xyz` needs revision too
     if species is None:
         # read species from POSCAR
         atoms = vasp.read_vasp(poscar)
         species = set(atoms.get_chemical_symbols())
+    else:
+        raise NotImplementedError
     if supercell_dims is None:
         supercell_dims = _calc_sc_dims(poscar, sposcar)
     make_omega2_pols(
-        species, supercell_dims, qgrid_dims, 
+        supercell_dims, qgrid_dims, 
         force_constants=force_constants, poscar=poscar, fix_phase = fix_pols_phase
     )
-    make_Qgridinfo(qgrid_dims, species, poscar)
+    make_Qgridinfo(qgrid_dims, poscar)
     from ..dos import fromOmaga2
     fromOmaga2()
     xtal_xyz = ''.join(species) + '.xyz'
-    make_crystal_xyz(xtal_xyz, species, poscar)
+    # species and positions
+    make_crystal_xyz(xtal_xyz, poscar)
     return
 
 
@@ -71,7 +77,7 @@ def _calc_int_scale_factor(v1, v2):
     return i
 
 def make_omega2_pols(
-        species, supercell_dims=[5,5,5], qgrid_dims=[51,51,51],
+        supercell_dims=[5,5,5], qgrid_dims=[51,51,51],
         force_constants='FORCE_CONSTANTS', poscar='POSCAR',
         fix_phase=True
 ):
@@ -80,7 +86,6 @@ def make_omega2_pols(
     Inputs
       - force_constants: path of the FORCE_CONSTANTS file
       - poscar: path of the POSCAR file
-      - species: list of atomic species
       - supercell_dims: supercell dimensions, eg "5 5 5". should be consistent with the FORCE_CONSTANTS file
       - qgrid_dims: Q grid dimensions
     
@@ -111,7 +116,7 @@ def make_omega2_pols(
     supercell_matrix = np.diag(supercell_dims)
     print "* Calling phonopy to compute eigen values and eigen vectors"
     from . import onGrid
-    qvecs, freq, pols = onGrid(species, Qs, supercell_matrix, force_constants, freq2omega=1, poscar=poscar)
+    qvecs, freq, pols = onGrid(Qs, supercell_matrix, force_constants, freq2omega=1, poscar=poscar)
     
     print "* Writing out freqencies"
     from mccomponents.sample.idf import Omega2, Polarizations
@@ -125,12 +130,12 @@ def make_omega2_pols(
     return
 
 
-def make_Qgridinfo(qgrid_dims, species, poscar='POSCAR'):
+def make_Qgridinfo(qgrid_dims, poscar='POSCAR'):
     """Create Q gridinfo file in IDF format
     """
     from phonopy.interface import vasp
     import numpy as np
-    atoms = vasp.read_vasp(poscar, species)
+    atoms = vasp.read_vasp(poscar)
     # atoms.cell is [a1,a2,a3]; inv(atoms.cell) is [b1,b2,b3].T; we want [b1,b2,b3]; hence the .T
     reci_cell = np.linalg.inv(atoms.cell).T * 2*np.pi
     # output
@@ -148,9 +153,9 @@ def make_Qgridinfo(qgrid_dims, species, poscar='POSCAR'):
     return
 
 
-def make_crystal_xyz(outpath, atom_chemical_symbols, poscar='POSCAR'):
+def make_crystal_xyz(outpath, poscar='POSCAR'):
     from phonopy.interface import vasp
-    atoms = vasp.read_vasp(poscar, atom_chemical_symbols)
+    atoms = vasp.read_vasp(poscar)
     # # of atoms
     lines = [str(len(atoms.get_chemical_symbols()))]
     # lattice

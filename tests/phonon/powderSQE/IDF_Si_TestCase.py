@@ -23,7 +23,7 @@ class TestCase(unittest.TestCase):
         saved = os.path.abspath('.')
         os.chdir(work)
         make_all(
-            species=['Si'], supercell_dims=[5,5,5],
+            supercell_dims=[5,5,5],
             qgrid_dims=[51,51,51],
             fix_pols_phase=True,
             force_constants='FORCE_CONSTANTS', poscar='POSCAR',
@@ -43,7 +43,7 @@ class TestCase(unittest.TestCase):
             disp=disp,
             N = int(1e6),
             Q_bins=np.arange(0, 14, 0.1), E_bins=np.arange(0,90,.5),
-            mass=28., species=['Si'],
+            mass=28., 
             doshist=doshist,
             T=300., Ei=120., max_det_angle=140.,
             include_multiphonon=True,

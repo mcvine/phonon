@@ -40,7 +40,7 @@ class TestCase(unittest.TestCase):
             disp=disp,
             N = int(1e5),
             Q_bins=np.arange(0, 4, 0.04), E_bins=np.arange(0,30,.2),
-            mass=12., species=['C'],
+            mass=12., 
             doshist=doshist,
             T=300., Ei=30., max_det_angle=60.,
             include_multiphonon=False,

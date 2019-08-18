@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
             T=100., # kelvin
             doshist = doshist, # DOS histogram
             mass = 28., # hack
-            species = ['Si'], supercell = (5,5,5),
+            supercell = (5,5,5),
             Q_bins = np.arange(0, 13, 0.1), E_bins = np.arange(0, 95, 0.5),
             workdir = work, N=int(1e5)
         )
@@ -49,7 +49,7 @@ class TestCase(unittest.TestCase):
             T=300., # kelvin
             doshist = doshist, # DOS histogram
             mass = 12, # hack
-            species = ['C'], supercell = (6,6,1),
+            supercell = (6,6,1),
             Q_bins = np.arange(0, 4, 0.04), E_bins = np.arange(0, 30, .2),
             workdir = '_tmp.test2a', N=N, include_multiphonon=False,
             max_det_angle=60.,
@@ -82,7 +82,7 @@ class TestCase(unittest.TestCase):
             T=300., # kelvin
             doshist = doshist, # DOS histogram
             mass = 12, # hack
-            species = ['C'], supercell = (6,6,1),
+            supercell = (6,6,1),
             Q_bins = np.arange(0, 23, 0.1), E_bins = np.arange(0, 250, 1),
             workdir = '_tmp.powderSQE', N=N, include_multiphonon=False
         )

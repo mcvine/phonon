@@ -23,7 +23,7 @@ class TestCase(unittest.TestCase):
         options = {
             'force-constants': os.path.join(self.phonons_path, 'FORCE_CONSTANTS'),
             'poscar': os.path.join(self.phonons_path, 'POSCAR'),
-            'species': 'Si',
+            # 'species': 'Si',
             'supercell-dims': '5 5 5',
             'qgrid-dims': '51 51 51',
             }

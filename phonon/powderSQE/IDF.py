@@ -31,7 +31,6 @@ def from_data_dir(
         N = int(1e6),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         mass = 12., # "average" mass
-        species = ['C'],
         doshist=None,
         T=300., Ei=100., max_det_angle=135.,
         include_multiphonon=True,
@@ -44,7 +43,7 @@ def from_data_dir(
     #
     poscar = os.path.join(datadir, 'POSCAR')
     from mcvine.phonon import from_phonopy
-    from_phonopy.make_crystal_xyz('structure.xyz', species, poscar)
+    from_phonopy.make_crystal_xyz('structure.xyz', poscar)
     from sampleassembly.crystal.ioutils import xyzfile2unitcell
     uc = xyzfile2unitcell('structure.xyz')
     # generate Q points
@@ -68,7 +67,7 @@ def from_data_dir(
     good = omega > 0
     # need atom positions
     from phonopy.interface import vasp
-    atoms = vasp.read_vasp(poscar, species)
+    atoms = vasp.read_vasp(poscar)
     positions = atoms.get_scaled_positions()
     #
     import tqdm

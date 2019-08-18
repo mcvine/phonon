@@ -20,7 +20,7 @@ def from_FORCE_CONSTANTS(
         T=300., # kelvin
         doshist=None, # DOS histogram
         mass = 12, # hack
-        species = ['C'], supercell = (6,6,1),
+        supercell = (6,6,1),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         workdir = None, N=int(1e6),
         include_multiphonon=True, scale_multiphonon=1.0, max_det_angle=135.,
@@ -39,7 +39,7 @@ def from_FORCE_CONSTANTS(
     force_constants=file_IO.parse_FORCE_CONSTANTS(os.path.join(datadir, 'FORCE_CONSTANTS'))
     poscar = os.path.join(datadir, 'POSCAR')
     from mcvine.phonon import from_phonopy
-    from_phonopy.make_crystal_xyz('structure.xyz', species, poscar)
+    from_phonopy.make_crystal_xyz('structure.xyz', poscar)
     from sampleassembly.crystal.ioutils import xyzfile2unitcell
     uc = xyzfile2unitcell('structure.xyz')
     # reciprocal basis
@@ -63,7 +63,7 @@ def from_FORCE_CONSTANTS(
     # run phonopy
     sys.stdout.write("Running phonopy...  "); sys.stdout.flush()
     qs, freqs, pols = onGrid(
-        species, hkls, sc_mat, 
+        hkls, sc_mat, 
         force_constants = force_constants,
         poscar = os.path.join(datadir, 'POSCAR'),
         freq2omega=1
@@ -79,7 +79,7 @@ def from_FORCE_CONSTANTS(
     assert three is 3
     # need atom positions
     from phonopy.interface import vasp
-    atoms = vasp.read_vasp(poscar, species)
+    atoms = vasp.read_vasp(poscar)
     positions = atoms.get_scaled_positions()
     # Compute
     import tqdm
