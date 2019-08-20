@@ -61,55 +61,20 @@ def from_data_dir(
     hkls = np.dot(Qpoints, uc.lattice.base.T)/(2*np.pi)
     #
     omega, pols = _getEsAndPols(disp, Qpoints)
-    nQ, nbr, natoms, three = pols.shape
-    assert three == 3
-    good = omega > 0
-    # need atom positions
     from phonopy.interface import vasp
     atoms = vasp.read_vasp(poscar)
-    positions = atoms.get_scaled_positions()
     masses = atoms.get_masses()
     average_mass = np.mean(masses)
-    symbols = atoms.get_chemical_symbols()
-    from ..atomic_scattering import AtomicScattering
-    bs = [AtomicScattering(s).b() for s in symbols]
-    total_xs = sum(AtomicScattering(s).sigma() for s in symbols)    
-    bovermass = np.array(bs)/np.sqrt(masses)
-    #
-    import tqdm
-    bins = Q_bins, E_bins
-    I = 0
-    for ibr in tqdm.tqdm(range(nbr)):
-        good1 = good[:, ibr]
-        Qmag_good = Qmag[good1]
-        omega_good = omega[good1, ibr]
-        Q_cart = Qpoints[good1, :]
-        good_hkls = hkls[good1, :]
-        #
-        exp_Q_dot_d = np.exp(1j * np.dot(good_hkls, positions.T) * 2*np.pi) # nQ, natoms
-        pols1 = pols[good1, ibr, :, :] # nQ, natoms, 3
-        Q_dot_pol = np.sum(np.transpose(pols1, (1,0,2)) * Q_cart, axis=-1).T # nQ, natoms
-        # 
-        F = np.sum(exp_Q_dot_d * Q_dot_pol*bovermass, axis=-1) # nQ      
-        M = np.abs(F)**2 / omega_good # nQ
-        I1, Qbb, Ebb = np.histogram2d(Qmag_good, omega_good, bins=bins, weights=M)
-        I = I + I1
-        continue
-    from mcni.utils import conversion
-    I *= conversion.k2e(1.) # canceling unit: hbar^2Q^2/2M/(hbar*omega)
-    # M is |b_d/sqrt(M_d)exp(iQ.d)(Q.e)|^2/omega
-    # At this moment M (and I) is using b in fm. change it to barn
-    I/=100
-
-    # Need to consider the density of the Q points and the volume of the Q space sampled.
-    uc_vol = atoms.get_volume(); ruc_vol = (2*np.pi)**3/uc_vol
-    I*=1./N*4./3*np.pi*max_Q**3/ruc_vol
+    from ._calc import calcIQE, apply_corrections
+    Qbb, Ebb, I = calcIQE(uc, omega, pols, Qpoints, Q_bins, E_bins)
     # additional corrections
-    from .use_phonopy import _apply_corrections
-    IQEhist = _apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
+    IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
     if include_multiphonon:
         from .use_phonopy import multiphononSQE
         mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=E_bins)
+        symbols = [a.element for a in uc]
+        from ..atomic_scattering import AtomicScattering
+        total_xs = sum(AtomicScattering(s).sigma() for s in symbols)
         return IQEhist, mphIQE * (total_xs/4/np.pi,0)
     return IQEhist
 

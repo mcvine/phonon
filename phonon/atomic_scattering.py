@@ -18,31 +18,31 @@ class AtomicScattering:
         self.element = element
         ptel = getattr(pt, element)
         if isotope is not None:
-            ns = ptel[isotope].neutron
+            self._e = ptel[isotope]
         else:
-            ns = ptel.neutron
-        self.ns = ns
+            self._e = ptel
+        self.mass = self._e.mass
         return
 
 
     def sigma(self):
         "total cross section. barn"
-        return self.ns.total
+        return self._e.neutron.total
 
 
     def b(self):
         "bound scattering length. fm"
-        return self.ns.b_c
+        return self._e.neutron.b_c
 
 
     def sigma_inc(self):
         "incoherent scattering cross section. barn"
-        return self.ns.incoherent
+        return self._e.neutron.incoherent
 
 
     def sigma_abs(self):
         "absorption cross section. barn"
-        return self.ns.absorption
+        return self._e.neutron.absorption
 
 
 # End of file
