@@ -112,3 +112,24 @@ def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
         I[Q>Qmax1, iE] = np.nan
     return IQEhist
 
+
+def multiphononSQE(
+        T=300., # kelvin
+        doshist=None, # DOS histogram
+        mass = 12, # hack
+        Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
+):
+    from multiphonon.forward import phonon
+    dos_e = doshist.E if hasattr(doshist, 'E') else doshist.energy
+    dos_dE = dos_e[1]-dos_e[0]
+    dos_g = doshist.I / np.sum(doshist.I) /dos_dE
+    Qbb = Q_bins
+    Q = (Qbb[1:] + Qbb[:-1])/2
+    dQ = Qbb[1]-Qbb[0]
+    Ebb = E_bins
+    E = (Ebb[1:] + Ebb[:-1])/2
+    mpsqe = phonon.sqehist(
+        dos_e, dos_g, Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=5, starting_order=2, Emax=E[-1]*3)
+    from multiphonon.sqe import interp as interp_sqe
+    mpsqe1 = interp_sqe(mpsqe, E)
+    return mpsqe1

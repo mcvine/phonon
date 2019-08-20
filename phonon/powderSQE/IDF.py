@@ -70,7 +70,7 @@ def from_data_dir(
     # additional corrections
     IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
     if include_multiphonon:
-        from .use_phonopy import multiphononSQE
+        from ._calc import multiphononSQE
         mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=E_bins)
         symbols = [a.element for a in uc]
         from ..atomic_scattering import AtomicScattering
