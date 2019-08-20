@@ -24,13 +24,11 @@ class TestCase(unittest.TestCase):
         shutil.copytree(src, work)
         doshist = hh.load(os.path.join(work, 'dos.h5'))
         from mcvine.phonon.powderSQE.use_phonopy import from_FORCE_CONSTANTS
-        IQEhist = from_FORCE_CONSTANTS(
+        IQEhist, mphhist = from_FORCE_CONSTANTS(
             work,
             Ei = 100., # meV
             T=100., # kelvin
             doshist = doshist, # DOS histogram
-            mass = 28., # hack
-            species = ['Si'], supercell = (5,5,5),
             Q_bins = np.arange(0, 13, 0.1), E_bins = np.arange(0, 95, 0.5),
             workdir = work, N=int(1e5)
         )
@@ -48,8 +46,7 @@ class TestCase(unittest.TestCase):
             Ei = 30., # meV
             T=300., # kelvin
             doshist = doshist, # DOS histogram
-            mass = 12, # hack
-            species = ['C'], supercell = (6,6,1),
+            supercell = (6,6,1),
             Q_bins = np.arange(0, 4, 0.04), E_bins = np.arange(0, 30, .2),
             workdir = '_tmp.test2a', N=N, include_multiphonon=False,
             max_det_angle=60.,
@@ -81,8 +78,7 @@ class TestCase(unittest.TestCase):
             Ei = 300., # meV
             T=300., # kelvin
             doshist = doshist, # DOS histogram
-            mass = 12, # hack
-            species = ['C'], supercell = (6,6,1),
+            supercell = (6,6,1),
             Q_bins = np.arange(0, 23, 0.1), E_bins = np.arange(0, 250, 1),
             workdir = '_tmp.powderSQE', N=N, include_multiphonon=False
         )
@@ -108,11 +104,10 @@ class TestCase(unittest.TestCase):
     def test3(self):
         datadir = os.path.join(here, '..', '..', 'data', 'graphite')
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
-        from mcvine.phonon.powderSQE.use_phonopy import multiphononSQE
+        from mcvine.phonon.powderSQE._calc import multiphononSQE
         IQEhist = multiphononSQE(
             T=300., # kelvin
             doshist = doshist, # DOS histogram
-            mass = 12, # hack
             Q_bins = np.arange(0, 23, 0.1), E_bins = np.arange(0, 250, 1),
         )
         hh.dump(IQEhist, 'graphite-multiephonon-T_300.h5')

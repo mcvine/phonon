@@ -33,7 +33,7 @@ install:
   - source activate testenv
   - conda config --set anaconda_upload no
   - conda install -c mcvine/label/unstable mcvine-core
-  - conda install tqdm multiphonon
+  - conda install tqdm multiphonon periodictable
   - export SRC=$PWD
   - export EXPORT_ROOT=$CONDA_PREFIX
   - export MCVINE_PHONON_BLD_ROOT=$SRC/build

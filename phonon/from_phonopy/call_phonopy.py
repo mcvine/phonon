@@ -16,7 +16,7 @@ from phonopy import Phonopy, file_IO
 THz2meV=4.1357
 
 def onGrid(
-        atom_chemical_symbols, qpoints, supercell_matrix, 
+        qpoints, supercell_matrix, 
         force_constants,
         freq2omega=THz2meV, poscar='POSCAR',
 ):
@@ -27,7 +27,7 @@ def onGrid(
     """
     
     # set up Si crystal lattice
-    bulk = vasp.read_vasp(poscar, atom_chemical_symbols)
+    bulk = vasp.read_vasp(poscar)
     
     # phonopy phonon instance
     phonon = Phonopy(bulk, supercell_matrix, factor=VaspToTHz)
@@ -67,7 +67,7 @@ def onGrid(
     print "* Fixing polarizations"
     nq, nbr, natoms, three = pols.shape
     assert three is 3
-    atoms = vasp.read_vasp(poscar, atom_chemical_symbols)
+    atoms = vasp.read_vasp(poscar)
     positions = atoms.get_scaled_positions()
     # correct polarization vectors
     # the phase factor is needed. see the notebook tests/phonon/phase-factor.ipynb

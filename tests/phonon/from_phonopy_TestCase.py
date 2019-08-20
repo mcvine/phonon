@@ -22,7 +22,7 @@ class TestCase(unittest.TestCase):
         saved = os.path.abspath('.')
         os.chdir(work)
         make_IDF_datadir(
-            species=['Si'], supercell_dims=[5,5,5],
+            supercell_dims=[5,5,5],
             qgrid_dims=[11,11,11],
             fix_pols_phase=True,
             force_constants='FORCE_CONSTANTS', poscar='POSCAR',
@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
         saved = os.path.abspath('.')
         os.chdir(work)
         from mcvine.phonon.from_phonopy import make_Qgridinfo
-        make_Qgridinfo((51,51,51), ['C'], poscar=poscar)
+        make_Qgridinfo((51,51,51), poscar=poscar)
         os.chdir(saved)
         # expected result
         expected = dict(
