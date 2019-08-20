@@ -38,16 +38,17 @@ class TestCase(unittest.TestCase):
         from mccomponents.sample import phonon as mcphonon
         doshist = mcphonon.read_dos.dos_fromidf(os.path.join(datadir, 'DOS')).doshist
         disp = psidf.disp_from_datadir(datadir)
-        IQEhist = psidf.from_data_dir(
+        IQEhist, mphhist = psidf.from_data_dir(
             datadir=datadir,
             disp=disp,
             N = int(1e6),
             Q_bins=np.arange(0, 14, 0.1), E_bins=np.arange(0,90,.5),
-            mass=28., 
             doshist=doshist,
             T=300., Ei=120., max_det_angle=140.,
             include_multiphonon=True,
         )
+        IQEhist = IQEhist + mphhist
+        hh.dump(IQEhist, 'Si-iqe-test2.h5')
         expected = hh.load(os.path.join(here, 'saved_results/Si-all-phonon-Ei_120-T_300-N_1e6.h5'))
         max = np.nanmax(expected.I)
         reldiff = IQEhist-expected
@@ -57,8 +58,6 @@ class TestCase(unittest.TestCase):
         Ntotal = IQEhist.size()
         self.assert_(Ngood*1./Ntotal>.65)
         self.assert_(Nbigdiff*1./Ngood<.10)
-        # hh.dump(IQEhist, 'Si-iqe-test2.h5')
         return
-
 
 if __name__ == '__main__': unittest.main()

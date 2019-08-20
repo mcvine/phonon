@@ -30,7 +30,6 @@ def from_data_dir(
         disp = None,
         N = int(1e6),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
-        mass = 12., # "average" mass
         doshist=None,
         T=300., Ei=100., max_det_angle=135.,
         include_multiphonon=True,
@@ -69,6 +68,13 @@ def from_data_dir(
     from phonopy.interface import vasp
     atoms = vasp.read_vasp(poscar)
     positions = atoms.get_scaled_positions()
+    masses = atoms.get_masses()
+    average_mass = np.mean(masses)
+    symbols = atoms.get_chemical_symbols()
+    from ..atomic_scattering import AtomicScattering
+    bs = [AtomicScattering(s).b() for s in symbols]
+    total_xs = sum(AtomicScattering(s).sigma() for s in symbols)    
+    bovermass = np.array(bs)/np.sqrt(masses)
     #
     import tqdm
     bins = Q_bins, E_bins
@@ -84,18 +90,27 @@ def from_data_dir(
         pols1 = pols[good1, ibr, :, :] # nQ, natoms, 3
         Q_dot_pol = np.sum(np.transpose(pols1, (1,0,2)) * Q_cart, axis=-1).T # nQ, natoms
         # 
-        F = np.sum(exp_Q_dot_d * Q_dot_pol, axis=-1) # nQ      
-        M = np.abs(F)**2 / omega_good # nQ  
+        F = np.sum(exp_Q_dot_d * Q_dot_pol*bovermass, axis=-1) # nQ      
+        M = np.abs(F)**2 / omega_good # nQ
         I1, Qbb, Ebb = np.histogram2d(Qmag_good, omega_good, bins=bins, weights=M)
         I = I + I1
         continue
-    
+    from mcni.utils import conversion
+    I *= conversion.k2e(1.) # canceling unit: hbar^2Q^2/2M/(hbar*omega)
+    # M is |b_d/sqrt(M_d)exp(iQ.d)(Q.e)|^2/omega
+    # At this moment M (and I) is using b in fm. change it to barn
+    I/=100
+
+    # Need to consider the density of the Q points and the volume of the Q space sampled.
+    uc_vol = atoms.get_volume(); ruc_vol = (2*np.pi)**3/uc_vol
+    I*=1./N*4./3*np.pi*max_Q**3/ruc_vol
+    # additional corrections
     from .use_phonopy import _apply_corrections
-    IQEhist = _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle)
+    IQEhist = _apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
     if include_multiphonon:
         from .use_phonopy import multiphononSQE
-        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=mass, Q_bins=Q_bins, E_bins=E_bins)
-        IQEhist += mphIQE
+        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=E_bins)
+        return IQEhist, mphIQE * (total_xs/4/np.pi,0)
     return IQEhist
 
 

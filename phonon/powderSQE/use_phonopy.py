@@ -19,7 +19,6 @@ def from_FORCE_CONSTANTS(
         Ei = 300., # meV
         T=300., # kelvin
         doshist=None, # DOS histogram
-        mass = 12, # hack
         supercell = (6,6,1),
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         workdir = None, N=int(1e6),
@@ -60,7 +59,7 @@ def from_FORCE_CONSTANTS(
     Qpoints = np.array([Qx,Qy,Qz]).T
     # in reciprocal units
     hkls = np.dot(Qpoints, uc.lattice.base.T)/(2*np.pi)
-    # run phonopy
+   # run phonopy
     sys.stdout.write("Running phonopy...  "); sys.stdout.flush()
     qs, freqs, pols = onGrid(
         hkls, sc_mat, 
@@ -81,6 +80,8 @@ def from_FORCE_CONSTANTS(
     from phonopy.interface import vasp
     atoms = vasp.read_vasp(poscar)
     positions = atoms.get_scaled_positions()
+    masses = atoms.get_masses()
+    mass = np.mean(masses)
     # Compute
     import tqdm
     bins = Q_bins, E_bins
@@ -109,7 +110,6 @@ def from_FORCE_CONSTANTS(
 
 
 def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
-    I *= 1./mass * conversion.k2e(1.)
     Q = (Qbb[1:] + Qbb[:-1])/2
     # correction 1
     ki = conversion.e2k(Ei)
@@ -121,7 +121,8 @@ def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
     thermal_factor = 1./2 * (1./np.tanh(E/2*beta) + 1)
     correction_E = thermal_factor * (2*np.pi)**3/v0 / (2*ki*kf)
     correction_Q = 1./Q
-    correction = np.outer(correction_Q, correction_E)
+    # the additional 1/4pi comes from powder average. See notes
+    correction = 1./4/np.pi*np.outer(correction_Q, correction_E)
     I*=correction
     # # Correction 2 - DW
     dos_e = doshist.E if hasattr(doshist, 'E') else doshist.energy
@@ -138,7 +139,6 @@ def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
     # first normalize by "event" count and make it density
     dQ = Q[1] - Q[0]
     dE = E[1] - E[0]
-    IQEhist.I /= N
     IQEhist.I /= dQ*dE
     # Simulate "Vanadium" data
     def norm_at(E, Qaxis, Ei):
@@ -148,12 +148,9 @@ def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
         kf = conversion.e2k(Ef)
         Qmin = np.abs(ki - kf)
         Qmax = ki + kf
-        Qmiddle = (Qmin + Qmax)/2
-        v_middle = 1./(Qmax-Qmin)
-        slope = v_middle / Qmiddle
         rt = np.zeros(Qaxis.shape)
         in_range = (Qaxis<Qmax) * (Qaxis>Qmin)
-        rt[in_range] = (Qaxis * slope)[in_range]
+        rt[in_range] = (Qaxis *(2*np.pi/ki/kf))[in_range]
         return rt
     norm_hist = IQEhist.copy()
     norm_hist.I[:] = 0
@@ -169,13 +166,12 @@ def _apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
     for iE, (E1, Qmin1, Qmax1) in enumerate(zip(E, DR_Qmin, DR_Qmax)):
         I[Q<Qmin1, iE] = np.nan
         I[Q>Qmax1, iE] = np.nan
-    rt = IQEhist; scale = 8*np.pi; rt.I*=scale; rt.E2*=scale*scale
-    return rt
+    return IQEhist
     #
     if include_multiphonon:
         ## multiphonon
         mpsqe = phonon.sqehist(
-            dos_e, dos_g, Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=5, starting_order=2, Emax=E[-1]*3)
+            dos_e, dos_g, Qmin=Q[0], Qmax=Q[-1]+dQ/2., dQ=dQ, T=T, M=mass, N=9, starting_order=2, Emax=E[-1]*3)
         mpsqe1 = interp_sqe(mpsqe, E)
         mpsqe1.I *= scale_multiphonon; mpsqe1.E2 *= scale_multiphonon*scale_multiphonon
     else:

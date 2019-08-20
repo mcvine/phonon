@@ -25,18 +25,23 @@ class AtomicScattering:
         return
 
 
+    def sigma(self):
+        "total cross section. barn"
+        return self.ns.total
+
+
     def b(self):
-        "bound scattering length"
+        "bound scattering length. fm"
         return self.ns.b_c
 
 
     def sigma_inc(self):
-        "incoherent scattering cross section"
+        "incoherent scattering cross section. barn"
         return self.ns.incoherent
 
 
     def sigma_abs(self):
-        "absorption cross section"
+        "absorption cross section. barn"
         return self.ns.absorption
 
 

@@ -35,17 +35,26 @@ class TestCase(unittest.TestCase):
         doshist = hh.load(os.path.join(datadir, 'exp_DOS.h5'))
         import mcvine.phonon.powderSQE.IDF as psidf
         disp = psidf.disp_from_datadir(datadir)
-        IQEhist = psidf.from_data_dir(
+        IQEhist, mphhist = psidf.from_data_dir(
             datadir=datadir,
             disp=disp,
-            N = int(1e5),
-            Q_bins=np.arange(0, 4, 0.04), E_bins=np.arange(0,30,.2),
-            mass=12., 
+            N = int(1e6),
+            Q_bins=np.arange(0, 23, 0.1), E_bins=np.arange(0,250,1.),
             doshist=doshist,
-            T=300., Ei=30., max_det_angle=60.,
-            include_multiphonon=False,
+            T=300., Ei=300., max_det_angle=140.,
+            include_multiphonon=True,
         )
-        # hh.dump(IQEhist, 'graphite-singlephonon-Ei_30-T_300-IDF.h5')
+        IQEhist += mphhist
+        hh.dump(IQEhist, 'graphite-allphonon-Ei_300-T_300-IDF.h5')
+        expected = hh.load(os.path.join(here, 'saved_results/graphite-allphonon-Ei_300-T_300-IDF.h5'))
+        max = np.nanmax(expected.I)
+        reldiff = IQEhist-expected
+        reldiff.I/=max; reldiff.E2/=max*max
+        Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
+        Ngood = (IQEhist.I==IQEhist.I).sum()
+        Ntotal = IQEhist.size()
+        self.assert_(Ngood*1./Ntotal>.65)
+        self.assert_(Nbigdiff*1./Ngood<.10)
         if plot:
             plt.figure(figsize=(6,3))
             max = np.nanmax(IQEhist.I)
