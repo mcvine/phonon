@@ -58,13 +58,13 @@ def onGrid(
     pols.shape = pols.shape[:-1] + (-1, 3)
     # pols: Q, branch, atom, xyz
 
-    print "* Discarding negative freqencies"
+    print("* Discarding negative freqencies")
     freq[freq<0] = 0
     # min = np.min(freq)
     # if min < 0: freq += -min
 
     # correction for pols
-    print "* Fixing polarizations"
+    print("* Fixing polarizations")
     nq, nbr, natoms, three = pols.shape
     assert three is 3
     atoms = vasp.read_vasp(poscar)

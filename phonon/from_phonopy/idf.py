@@ -93,7 +93,7 @@ def make_omega2_pols(
       - Omega2
       - Polarizations
     """
-    print "* Constructing Q array"
+    print("* Constructing Q array")
     qgrid_dims = np.array(qgrid_dims, dtype=float)
     delta = 1./(qgrid_dims-1)
     Qx = np.arange(0, 1.+delta[0]/2, delta[0])
@@ -114,18 +114,18 @@ def make_omega2_pols(
     # !!! only need one symbol per specie
     # !!! follow vasp convention !!!
     supercell_matrix = np.diag(supercell_dims)
-    print "* Calling phonopy to compute eigen values and eigen vectors"
+    print("* Calling phonopy to compute eigen values and eigen vectors")
     from . import onGrid
     qvecs, freq, pols = onGrid(Qs, supercell_matrix, force_constants, freq2omega=1, poscar=poscar)
     
-    print "* Writing out freqencies"
+    print("* Writing out freqencies")
     from mccomponents.sample.idf import Omega2, Polarizations
     freq[freq<0] = 0
     # min = np.min(freq)
     # if min < 0: freq += -min
     omega2 = freq**2 * 1e24 * (2*np.pi)**2
     Omega2.write(omega2)
-    print "* Writing out polarizations"
+    print("* Writing out polarizations")
     Polarizations.write(pols)
     return
 

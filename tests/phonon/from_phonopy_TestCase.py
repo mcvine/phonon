@@ -56,7 +56,7 @@ class TestCase(unittest.TestCase):
         res = dict()
         exec(open(os.path.join(work, 'Qgridinfo')).read(), res)
         # compare
-        for k,v in expected.iteritems():
+        for k,v in expected.items():
             assert np.allclose(v,res[k]), "%s vs %s" % (v, res[k])
         return
 

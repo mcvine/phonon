@@ -53,8 +53,8 @@ class TestCase(unittest.TestCase):
         Nbigdiff = (np.abs(reldiff.I)>0.03).sum()
         Ngood = (IQEhist.I==IQEhist.I).sum()
         Ntotal = IQEhist.size()
-        self.assert_(Ngood*1./Ntotal>.65)
-        self.assert_(Nbigdiff*1./Ngood<.10)
+        self.assertTrue(Ngood*1./Ntotal>.65)
+        self.assertTrue(Nbigdiff*1./Ngood<.10)
         if plot:
             plt.figure(figsize=(6,3))
             max = np.nanmax(IQEhist.I)

@@ -10,7 +10,7 @@ def fromOmaga2():
     energies = np.sqrt(omega2) * units.hertz2mev
 
     max = np.max(energies)
-    print max
+    print(max)
 
     max = (max+10)//10*10.
     step = max/500; step = 10**np.round(np.log10(step))

@@ -28,7 +28,7 @@ class TestCase(unittest.TestCase):
             'qgrid-dims': '51 51 51',
             }
         cmd += ' '.join('--%s %s' % (k, v) for k,v in options.items())
-        print cmd
+        print(cmd)
         if os.system(cmd):
             raise RuntimeError("%s failed" % cmd)
         return
