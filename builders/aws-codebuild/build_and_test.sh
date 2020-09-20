@@ -5,13 +5,19 @@ export PATH=$HOME/mc/bin:$PATH
 source activate test
 
 export SRC=$PWD
-export EXPORT_ROOT=$CONDA_PREFIX
+export PREFIX=$CONDA_PREFIX
+
+PY_INCLUDE_DIR=${PREFIX}/include/`ls ${PREFIX}/include/|grep python${PYTHON_VERSION}`
+PY_SHAREDLIB=${PREFIX}/lib/`ls ${PREFIX}/lib/|grep libpython${PYTHON_VERSION}[a-z]*.so$`
+echo $PY_INCLUDE_DIR
+echo $PY_SHAREDLIB
+
 export MCVINE_PHONON_BLD_ROOT=$SRC/build
 mkdir -p $MCVINE_PHONON_BLD_ROOT && cd $MCVINE_PHONON_BLD_ROOT 
 cmake \
-    -DCMAKE_INSTALL_PREFIX=$EXPORT_ROOT \
-    -DPYTHON_LIBRARY=$CONDA_PREFIX/lib/libpython${PYTHON_VERSION}.so \
-    -DPYTHON_INCLUDE_DIR=$CONDA_PREFIX/include/python${PYTHON_VERSION} \
+    -DCMAKE_INSTALL_PREFIX=$PREFIX \
+    -DPYTHON_LIBRARY=$PY_SHAREDLIB \
+    -DPYTHON_INCLUDE_DIR=$PY_INCLUDE_DIR \
     $SRC
 make install
 cd -
