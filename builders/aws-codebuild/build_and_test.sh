@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 set -x
 export PATH=$HOME/mc/bin:$PATH
 source activate test

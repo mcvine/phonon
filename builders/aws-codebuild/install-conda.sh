@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e
 set -x
 cd $HOME
 # conda
@@ -11,4 +12,5 @@ which conda
 conda config --add channels conda-forge
 conda config --add channels diffpy
 conda config --add channels mcvine
+conda config --add channels mantid
 conda update conda
