@@ -41,9 +41,9 @@ jobs:
         run: |
           conda install -c mcvine/label/unstable mcvine-core  tqdm multiphonon periodictable
           mcvine
-          export SRC=$PWD
-          export EXPORT_ROOT=$CONDA_PREFIX
-          export MCVINE_PHONON_BLD_ROOT=$SRC/build
+          SRC=$PWD
+          EXPORT_ROOT=$CONDA_PREFIX
+          MCVINE_PHONON_BLD_ROOT=$SRC/build
           mkdir -p $MCVINE_PHONON_BLD_ROOT && cd $MCVINE_PHONON_BLD_ROOT 
           PYVER_MAJOR=${CONDA_PY:0:1}
           PYVER_MINOR=${CONDA_PY:1:1}
