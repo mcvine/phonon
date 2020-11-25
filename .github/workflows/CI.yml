@@ -1,0 +1,64 @@
+name: CI
+
+env: {}
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: ["3.6", "2.7"]   
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: ~/.mantid
+        run: git clone https://github.com/yxqd/dotmantid ~/.mantid
+
+      # setup conda
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          activate-environment: testenv
+          python-version: ${{ matrix.python-version }}
+          channels: mcvine,mantid,diffpy,conda-forge
+      
+      # install deps and build
+      - name: install / build
+        shell: pwsh
+        run: |
+          conda install -c mcvine/label/unstable mcvine-core  tqdm multiphonon periodictable
+          mcvine
+          export SRC=$PWD
+          export EXPORT_ROOT=$CONDA_PREFIX
+          export MCVINE_PHONON_BLD_ROOT=$SRC/build
+          mkdir -p $MCVINE_PHONON_BLD_ROOT && cd $MCVINE_PHONON_BLD_ROOT 
+          PYVER_MAJOR=${CONDA_PY:0:1}
+          PYVER_MINOR=${CONDA_PY:1:1}
+          PYVER=${PYVER_MAJOR}.${PYVER_MINOR}
+          echo $PYVER
+          PY_INCLUDE_DIR=${CONDA_PREFIX}/include/`ls ${CONDA_PREFIX}/include/|grep python${PYVER}`
+          PY_SHAREDLIB=${CONDA_PREFIX}/lib/`ls ${CONDA_PREFIX}/lib/|grep libpython${PYVER}[a-z]*.so$`
+          echo $PY_INCLUDE_DIR
+          echo $PY_SHAREDLIB
+          cmake -DCMAKE_INSTALL_PREFIX=$EXPORT_ROOT -DPYTHON_LIBRARY=$PY_SHAREDLIB -DPYTHON_INCLUDE_DIR=$PY_INCLUDE_DIR $SRC
+          make install
+          cd $SRC
+
+      # test
+      - name: test
+        shell: pwsh
+        run: |
+          cd tests && py.test -s
