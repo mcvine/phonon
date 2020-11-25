@@ -41,4 +41,6 @@ jobs:
         run: |
           conda install -c mcvine/label/unstable mcvine-core  tqdm multiphonon periodictable
           mcvine
-          ./builders/aws-codebuild/build_and_test.sh
+          ./builders/github-actions/build_and_test.sh
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
