@@ -31,34 +31,14 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          activate-environment: testenv
+          activate-environment: test
           python-version: ${{ matrix.python-version }}
           channels: mcvine,mantid,diffpy,conda-forge
       
       # install deps and build
-      - name: install / build
+      - name: install / build / test
         shell: pwsh
         run: |
           conda install -c mcvine/label/unstable mcvine-core  tqdm multiphonon periodictable
           mcvine
-          SRC=$PWD
-          EXPORT_ROOT=$CONDA_PREFIX
-          MCVINE_PHONON_BLD_ROOT=$SRC/build
-          mkdir -p $MCVINE_PHONON_BLD_ROOT && cd $MCVINE_PHONON_BLD_ROOT 
-          PYVER_MAJOR=${CONDA_PY:0:1}
-          PYVER_MINOR=${CONDA_PY:1:1}
-          PYVER=${PYVER_MAJOR}.${PYVER_MINOR}
-          echo $PYVER
-          PY_INCLUDE_DIR=${CONDA_PREFIX}/include/`ls ${CONDA_PREFIX}/include/|grep python${PYVER}`
-          PY_SHAREDLIB=${CONDA_PREFIX}/lib/`ls ${CONDA_PREFIX}/lib/|grep libpython${PYVER}[a-z]*.so$`
-          echo $PY_INCLUDE_DIR
-          echo $PY_SHAREDLIB
-          cmake -DCMAKE_INSTALL_PREFIX=$EXPORT_ROOT -DPYTHON_LIBRARY=$PY_SHAREDLIB -DPYTHON_INCLUDE_DIR=$PY_INCLUDE_DIR $SRC
-          make install
-          cd $SRC
-
-      # test
-      - name: test
-        shell: pwsh
-        run: |
-          cd tests && py.test -s
+          ./builders/aws-codebuild/build_and_test.sh
