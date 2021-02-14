@@ -1,10 +1,10 @@
 package:
-  name: mcvine.workflow
+  name: mcvine.phonon
   version: XXXVERSIONXXX
 
 source:
   git_rev: XXXGIT_REVXXX
-  git_url: https://github.com/mcvine/workflow.git
+  git_url: https://github.com/mcvine/phonon.git
 
 requirements:
   build:
