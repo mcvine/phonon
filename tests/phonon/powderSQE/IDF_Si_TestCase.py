@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
             Q_bins=np.arange(0, 14, 0.1), E_bins=np.arange(0,90,.5),
             doshist=doshist,
             T=300., Ei=120., max_det_angle=140.,
-            include_multiphonon=True,
+            include_multiphonon=True, extend_to_negative_E=True
         )
         IQEhist = IQEhist + mphhist
         hh.dump(IQEhist, 'Si-iqe-test2.h5')

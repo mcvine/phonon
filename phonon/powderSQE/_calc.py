@@ -47,8 +47,15 @@ def calcIQE(uc, omega, pols, Qpoints, Q_bins, E_bins):
     I*=1./N*4./3*np.pi*max_Q**3/ruc_vol
     return Qbb, Ebb, I
 
+def extend_to_negative_E(Qbb, Ebb, I, T):
+    from multiphonon.forward.phonon import kelvin2mev
+    negEbb = Ebb[:0:-1]*-1
+    Ebb2 = np.concatenate([negEbb, Ebb])
+    negI = I[:, ::-1]
+    I2 = np.hstack([negI, I])
+    return Qbb, Ebb2, I2
 
-def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
+def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei):
     """apply remaining corrections to IQE. this needs to be combined with calcIQE"""
     from mcni.utils import conversion
     from multiphonon.forward.phonon import kelvin2mev
@@ -62,7 +69,7 @@ def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
     kf = conversion.e2k(Ef)
     v0 = uc.lattice.volume
     beta = 1./(T*kelvin2mev)
-    thermal_factor = 1./2 * (1./np.tanh(E/2*beta) + 1)
+    thermal_factor = 1./2 * (1./np.tanh(np.abs(E)/2*beta) + np.sign(E))
     correction_E = thermal_factor * (2*np.pi)**3/v0 / (2*ki*kf)
     correction_Q = 1./Q
     # the additional 1/4pi comes from powder average. See notes
@@ -102,8 +109,16 @@ def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
         norm_hist[(), E_].I[:] = norm_at(E_, Q, Ei)
     # normalize
     IQEhist = IQEhist/norm_hist
-    #
-    ## Dynamical range
+    return IQEhist
+
+def apply_dynamical_range(IQEhist, Ei, max_det_angle):
+    from mcni.utils import conversion
+    Q = IQEhist.Q
+    # correction 1
+    ki = conversion.e2k(Ei)
+    E = IQEhist.E
+    Ef = Ei - E
+    kf = conversion.e2k(Ef)
     DR_Qmin = ki-kf
     DR_Qmax = ((ki*ki + kf*kf - 2*ki*kf*np.cos(max_det_angle*np.pi/180)))**.5
     I = IQEhist.I
@@ -111,7 +126,6 @@ def apply_corrections(I, Qbb, Ebb, N, mass, uc, doshist, T, Ei, max_det_angle):
         I[Q<Qmin1, iE] = np.nan
         I[Q>Qmax1, iE] = np.nan
     return IQEhist
-
 
 def multiphononSQE(
         T=300., # kelvin

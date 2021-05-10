@@ -32,7 +32,7 @@ def from_data_dir(
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         doshist=None,
         T=300., Ei=100., max_det_angle=135.,
-        include_multiphonon=True,
+        include_multiphonon=True, extend_to_negative_E=False,
 ):
     if disp is None:
         from mccomponents.sample.phonon import periodicdispersion_fromidf
@@ -65,13 +65,19 @@ def from_data_dir(
     atoms = vasp.read_vasp(poscar)
     masses = atoms.get_masses()
     average_mass = np.mean(masses)
-    from ._calc import calcIQE, apply_corrections
+    from ._calc import (calcIQE, apply_corrections, apply_dynamical_range)
     Qbb, Ebb, I = calcIQE(uc, omega, pols, Qpoints, Q_bins, E_bins)
-    # additional corrections
-    IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
+    if extend_to_negative_E:
+        from ._calc import extend_to_negative_E
+        # now Ebb includes negatives
+        Qbb, Ebb, I = extend_to_negative_E(Qbb, Ebb, I, T)
+    # corrections
+    IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei)
+    IQEhist = apply_dynamical_range(IQEhist, Ei, max_det_angle)
     if include_multiphonon:
         from ._calc import multiphononSQE
-        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=E_bins)
+        Ebb = IQEhist.axisFromName('E').binBoundaries().asNumarray()
+        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=Ebb)
         symbols = [a.element for a in uc]
         from ..atomic_scattering import AtomicScattering
         total_xs = sum(AtomicScattering(s).sigma() for s in symbols)

@@ -18,7 +18,11 @@ def from_FORCE_CONSTANTS(
         Q_bins = np.arange(0, 11, 0.1), E_bins = np.arange(0, 50, 0.5),
         workdir = None, N=int(1e6),
         include_multiphonon=True, scale_multiphonon=1.0, max_det_angle=135.,
+        extend_to_negative_E=False,
 ):
+    '''This implementation only uses phonopy. The implementation in IDF uses
+    dispersion data stored in IDF format.
+    '''
     # create and change to workdir
     if workdir is None:
         import tempfile
@@ -69,16 +73,22 @@ def from_FORCE_CONSTANTS(
     omega = freqs*1e12*2*np.pi
     from mccomponents.sample.idf import units
     omega *= units.hertz2mev
-    from ._calc import calcIQE, apply_corrections
+    from ._calc import (calcIQE, apply_corrections, apply_dynamical_range)
     Qbb, Ebb, I = calcIQE(uc, omega, pols, Qpoints, Q_bins, E_bins)
+    if extend_to_negative_E:
+        from ._calc import extend_to_negative_E
+        # now Ebb includes negatives
+        Qbb, Ebb, I = extend_to_negative_E(Qbb, Ebb, I, T)
     # additional corrections
     symbols = [a.element for a in uc]
     from ..atomic_scattering import AtomicScattering
     masses = [AtomicScattering(s).mass for s in symbols]; average_mass = np.mean(masses)
-    IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei, max_det_angle)
+    IQEhist = apply_corrections(I, Qbb, Ebb, N, average_mass, uc, doshist, T, Ei)
+    IQEhist = apply_dynamical_range(IQEhist, Ei, max_det_angle)
     if include_multiphonon:
         from ._calc import multiphononSQE
-        mphIQE = multiphononSQE(T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=E_bins)
+        mphIQE = multiphononSQE(
+            T=T, doshist=doshist, mass=average_mass, Q_bins=Q_bins, E_bins=Ebb)
         symbols = [a.element for a in uc]
         total_xs = sum(AtomicScattering(s).sigma() for s in symbols)
         return IQEhist, mphIQE * (total_xs/4/np.pi,0)

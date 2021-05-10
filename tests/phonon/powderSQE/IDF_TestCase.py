@@ -42,7 +42,7 @@ class TestCase(unittest.TestCase):
             Q_bins=np.arange(0, 23, 0.1), E_bins=np.arange(0,250,1.),
             doshist=doshist,
             T=300., Ei=300., max_det_angle=140.,
-            include_multiphonon=True,
+            include_multiphonon=True, extend_to_negative_E=True
         )
         IQEhist += mphhist
         hh.dump(IQEhist, 'graphite-allphonon-Ei_300-T_300-IDF.h5')
