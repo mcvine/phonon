@@ -11,6 +11,7 @@ on:
       - master
   schedule:
     - cron: "25 19 * * *"
+  workflow_dispatch:
       
 jobs:
   build-and-test:
@@ -19,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.7"]   
+        python-version: ["3.9"]   
     steps:
       - name: Check out source code
         uses: actions/checkout@v2
@@ -35,8 +36,16 @@ jobs:
           auto-update-conda: true
           activate-environment: test
           python-version: ${{ matrix.python-version }}
-          channels: mcvine,mantid,diffpy,conda-forge
+          channels: mcvine,conda-forge
       
+      # use mamba solver
+      - name: use mamba solver in conda
+        shell: pwsh
+        run: |
+          # conda update -n base conda
+          conda install -n base conda-libmamba-solver
+          conda config --set solver libmamba
+          
       # install deps and build
       - name: install / build / test
         shell: pwsh
